@@ -17,6 +17,7 @@ from .api import NetboiAuthError, NetboiClient, NetboiError
 from .const import (
     DEFAULT_SCAN_INTERVAL_MINUTES,
     DOMAIN,
+    EVENT_CENSOR_CHANGED,
     OPT_SCAN_INTERVAL,
 )
 
@@ -190,6 +191,13 @@ class NetboiCoordinator(DataUpdateCoordinator[NetboiData]):
             _aligned_totals([s for s in series if s.get("account_id") in visible_ids])
         )
         self._schedule_expiry_refresh(data)
+        # Reveals/conceals that didn't go through our websocket commands
+        # (services, another device, window expiry) still notify every card.
+        if self.data is not None and self.data.censored_now() != data.censored_now():
+            self.hass.bus.async_fire(
+                EVENT_CENSOR_CHANGED,
+                {"entry_id": self.entry.entry_id, "censored": data.censored_now()},
+            )
         return data
 
     def _schedule_expiry_refresh(self, data: NetboiData) -> None:

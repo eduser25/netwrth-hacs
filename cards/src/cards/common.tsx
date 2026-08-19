@@ -1,6 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AccountSeries, RangeKey } from "../lib/types";
-import { Hass, Overview, conceal, fetchOverview, fetchSeries, reveal } from "../lib/ha";
+import {
+  CensorChangedEvent,
+  EVENT_CENSOR_CHANGED,
+  Hass,
+  Overview,
+  conceal,
+  fetchOverview,
+  fetchSeries,
+  reveal,
+} from "../lib/ha";
 import PinPad from "../components/PinPad";
 
 // Every card carries these; specific cards extend it.
@@ -67,6 +76,31 @@ export function useNetboi(hass: Hass, entry: string | undefined, range: RangeKey
       clearInterval(timer);
     };
   }, [hass, entry, range, tick, refresh]);
+
+  // Censor-state push: when any card (or device, or automation) flips this
+  // key's censor state, the integration fires an event and every subscribed
+  // card refetches at once — no waiting out the poll interval. entryIdRef
+  // tracks the resolved entry so one subscription outlives overview reloads.
+  const entryIdRef = useRef<string | null>(null);
+  entryIdRef.current = overview?.entry_id ?? null;
+  useEffect(() => {
+    let unsub: (() => Promise<void>) | null = null;
+    let alive = true;
+    hass.connection
+      .subscribeEvents<CensorChangedEvent>((ev) => {
+        const mine = entryIdRef.current;
+        if (mine == null || ev.data.entry_id === mine) refresh();
+      }, EVENT_CENSOR_CHANGED)
+      .then((u) => {
+        if (alive) unsub = u;
+        else u();
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+      unsub?.();
+    };
+  }, [hass.connection, refresh]);
 
   // Cosmetic local deadline at reveal expiry (+1s slack for clock skew).
   useEffect(() => {

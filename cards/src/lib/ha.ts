@@ -4,8 +4,20 @@ import { Account, AccountSeries, RangeKey } from "./types";
 export type Hass = {
   connection: {
     sendMessagePromise<T>(msg: Record<string, unknown>): Promise<T>;
+    subscribeEvents<T>(
+      callback: (ev: T) => void,
+      eventType: string
+    ): Promise<() => Promise<void>>;
   };
 };
+
+export type CensorChangedEvent = {
+  data: { entry_id: string; censored: boolean };
+};
+
+// Fired by the integration whenever the key's censor state flips (a reveal
+// from any card or device, a conceal, a service call, or window expiry).
+export const EVENT_CENSOR_CHANGED = "netboi_censor_changed";
 
 export type Me = {
   label: string;

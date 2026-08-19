@@ -173,6 +173,9 @@ async def ws_reveal(hass: HomeAssistant, connection, msg: dict[str, Any]) -> Non
     except NetboiError as err:
         connection.send_error(msg["id"], "netboi_error", str(err))
         return
+    # The coordinator refresh detects the censor flip and fires
+    # EVENT_CENSOR_CHANGED once fresh data is in place, so subscribed cards
+    # never refetch into a stale snapshot.
     _invalidate_cache(rt.coordinator.entry.entry_id)
     await rt.coordinator.async_request_refresh()
     connection.send_result(msg["id"], {"ok": True, **out})
