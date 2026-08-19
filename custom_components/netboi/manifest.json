@@ -1,0 +1,13 @@
+{
+  "domain": "netboi",
+  "name": "netboi",
+  "codeowners": ["@eduser25"],
+  "config_flow": true,
+  "dependencies": ["http", "websocket_api", "frontend", "lovelace"],
+  "documentation": "https://github.com/eduser25/netboi-hacs",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/eduser25/netboi-hacs/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

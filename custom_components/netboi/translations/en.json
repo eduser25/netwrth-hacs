@@ -1,0 +1,33 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to netboi",
+        "description": "Create an API key in netboi under Settings → Integrations, then paste it here. A censored-only key never exposes real amounts to Home Assistant.",
+        "data": {
+          "base_url": "netboi URL",
+          "api_key": "API key"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not reach netboi at that URL.",
+      "invalid_auth": "netboi rejected the API key."
+    },
+    "abort": {
+      "already_configured": "This netboi API key is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "netboi options",
+        "data": {
+          "scan_interval_minutes": "Polling interval (minutes)",
+          "reveal_ttl_minutes": "Default auto-conceal after reveal (minutes, 0 = stay revealed)",
+          "expose_real_sensors": "Expose real-currency sensors (writes real amounts into HA history while revealed)"
+        }
+      }
+    }
+  }
+}

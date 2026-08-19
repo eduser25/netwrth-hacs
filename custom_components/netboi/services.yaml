@@ -1,0 +1,42 @@
+reveal:
+  name: Reveal amounts
+  description: >-
+    Enter the censor PIN to show real amounts through this integration's API
+    key, optionally auto-concealing after a window. Only works on full-access
+    keys.
+  fields:
+    code:
+      name: PIN
+      description: The 4-digit censor PIN.
+      required: true
+      selector:
+        text:
+          type: password
+    ttl_minutes:
+      name: Auto-conceal after
+      description: >-
+        Minutes until amounts censor themselves again. 0 keeps them revealed
+        until the conceal service runs. Defaults to the integration option.
+      selector:
+        number:
+          min: 0
+          max: 43200
+          unit_of_measurement: minutes
+          mode: box
+    entry_id:
+      name: Config entry
+      description: Target a specific netboi entry (default: all).
+      selector:
+        config_entry:
+          integration: netboi
+
+conceal:
+  name: Conceal amounts
+  description: Censor amounts again immediately. Never needs a PIN.
+  fields:
+    entry_id:
+      name: Config entry
+      description: Target a specific netboi entry (default: all).
+      selector:
+        config_entry:
+          integration: netboi
