@@ -13,6 +13,7 @@ import voluptuous as vol
 
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.util import dt as dt_util
 
 from .api import NetboiError, NetboiPinError
 from .const import (
@@ -24,6 +25,8 @@ from .const import (
 )
 
 # Multiple cards share fetches: per (entry, range) series cache, short-lived.
+# Entries store their expiry deadline directly, capped at the key's reveal
+# expiry so revealed data is never served from cache past the window.
 SERIES_CACHE_SECONDS = 55
 _series_cache: dict[tuple[str, str], tuple[float, Any]] = {}
 
@@ -87,6 +90,12 @@ def ws_overview(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
     data = rt.coordinator.data
     me = dict(data.me)
     me["can_reveal"] = me.get("scope") == SCOPE_READ_FULL
+    # The coordinator snapshot may predate the reveal window's expiry; report
+    # the state as of now.
+    if data.censored_now():
+        me["censored"] = True
+        me["revealed"] = False
+        me["reveal_expires"] = None
     connection.send_result(
         msg["id"],
         {
@@ -117,7 +126,7 @@ async def ws_series(hass: HomeAssistant, connection, msg: dict[str, Any]) -> Non
     entry_id = rt.coordinator.entry.entry_id
     key = (entry_id, msg["range"])
     cached = _series_cache.get(key)
-    if cached and time.monotonic() - cached[0] < SERIES_CACHE_SECONDS:
+    if cached and time.monotonic() < cached[0]:
         connection.send_result(msg["id"], cached[1])
         return
     try:
@@ -125,8 +134,15 @@ async def ws_series(hass: HomeAssistant, connection, msg: dict[str, Any]) -> Non
     except NetboiError as err:
         connection.send_error(msg["id"], "netboi_error", str(err))
         return
-    result = {"series": series, "censored": rt.coordinator.data.censored if rt.coordinator.data else True}
-    _series_cache[key] = (time.monotonic(), result)
+    data = rt.coordinator.data
+    result = {"series": series, "censored": data.censored_now() if data else True}
+    valid_until = time.monotonic() + SERIES_CACHE_SECONDS
+    exp = data.reveal_expires_at() if data else None
+    if exp is not None:
+        remaining = (exp - dt_util.utcnow()).total_seconds()
+        if remaining > 0:
+            valid_until = min(valid_until, time.monotonic() + remaining)
+    _series_cache[key] = (valid_until, result)
     connection.send_result(msg["id"], result)
 
 

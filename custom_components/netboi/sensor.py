@@ -135,7 +135,7 @@ class NetboiRealSensor(NetboiEntity, SensorEntity):
 
     @property
     def available(self) -> bool:
-        return super().available and not self.coordinator.data.censored
+        return super().available and not self.coordinator.data.censored_now()
 
 
 class NetboiNetWorthSensor(NetboiRealSensor):

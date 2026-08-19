@@ -16,6 +16,12 @@ const REFRESH_MS = 60_000;
 
 // Shared load/refresh cycle: overview (key state + accounts) plus the series
 // for the active range, re-pulled every minute and after reveal/conceal.
+//
+// The server is the authority on the reveal window (it re-censors lazily per
+// request); the two effects below only make the *display* converge promptly:
+// a local deadline drops revealed data the moment the window lapses, and a
+// visibility hook refetches when a sleeping screen wakes up instead of
+// waiting out a throttled interval.
 export function useNetboi(hass: Hass, entry: string | undefined, range: RangeKey) {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [series, setSeries] = useState<AccountSeries[] | null>(null);
@@ -24,6 +30,22 @@ export function useNetboi(hass: Hass, entry: string | undefined, range: RangeKey
   const [tick, setTick] = useState(0);
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
+
+  // Drop stale revealed data and refetch: the values on screen may predate
+  // the reveal window's expiry, so don't keep showing them while loading.
+  const expire = useCallback(() => {
+    setSeries(null);
+    setOverview((ov) =>
+      ov ? { ...ov, me: { ...ov.me, censored: true, revealed: false, reveal_expires: null } } : ov
+    );
+    setMasked(true);
+    refresh();
+  }, [refresh]);
+
+  const revealedUntil =
+    overview && !overview.me.censored && overview.me.reveal_expires
+      ? new Date(overview.me.reveal_expires).getTime()
+      : null;
 
   useEffect(() => {
     let alive = true;
@@ -45,6 +67,37 @@ export function useNetboi(hass: Hass, entry: string | undefined, range: RangeKey
       clearInterval(timer);
     };
   }, [hass, entry, range, tick, refresh]);
+
+  // Cosmetic local deadline at reveal expiry (+1s slack for clock skew).
+  useEffect(() => {
+    if (revealedUntil == null) return;
+    const ms = revealedUntil - Date.now() + 1000;
+    if (ms <= 0) {
+      expire();
+      return;
+    }
+    const timer = setTimeout(expire, ms);
+    return () => clearTimeout(timer);
+  }, [revealedUntil, expire]);
+
+  // Wall tablets sleep; on wake, re-pull immediately — and if the reveal
+  // window lapsed while asleep, blank the stale frame before the fetch.
+  useEffect(() => {
+    const onWake = () => {
+      if (document.visibilityState !== "visible") return;
+      if (revealedUntil != null && Date.now() >= revealedUntil) {
+        expire();
+      } else {
+        refresh();
+      }
+    };
+    document.addEventListener("visibilitychange", onWake);
+    window.addEventListener("pageshow", onWake);
+    return () => {
+      document.removeEventListener("visibilitychange", onWake);
+      window.removeEventListener("pageshow", onWake);
+    };
+  }, [revealedUntil, expire, refresh]);
 
   return { overview, series, masked, error, refresh };
 }

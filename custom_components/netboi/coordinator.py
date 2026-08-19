@@ -8,8 +8,10 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from .api import NetboiAuthError, NetboiClient, NetboiError
 from .const import (
@@ -44,11 +46,28 @@ class NetboiData:
     def censored(self) -> bool:
         return bool(self.me.get("censored", True))
 
+    def reveal_expires_at(self) -> datetime | None:
+        v = self.me.get("reveal_expires")
+        return _parse_ts(v) if v else None
+
+    def censored_now(self) -> bool:
+        """Censor state at this instant: the server evaluates the reveal
+
+        window lazily per request, so between polls we apply the expiry
+        deadline it gave us instead of trusting a stale snapshot.
+        """
+        if self.censored:
+            return True
+        exp = self.reveal_expires_at()
+        return exp is not None and exp <= dt_util.utcnow()
+
 
 def _parse_ts(value: str) -> datetime | None:
+    # dt_util handles RFC3339 with nanosecond fractions (Go's default wire
+    # format), which datetime.fromisoformat does not.
     try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except (ValueError, AttributeError):
+        return dt_util.parse_datetime(value)
+    except (ValueError, TypeError):
         return None
 
 
@@ -122,9 +141,11 @@ class NetboiCoordinator(DataUpdateCoordinator[NetboiData]):
             _LOGGER,
             name=f"{DOMAIN} {entry.title}",
             update_interval=timedelta(minutes=minutes),
+            config_entry=entry,
         )
         self.entry = entry
         self.client = client
+        self._expiry_cancel = None
 
     async def _async_update_data(self) -> NetboiData:
         try:
@@ -168,7 +189,34 @@ class NetboiCoordinator(DataUpdateCoordinator[NetboiData]):
         data.changes = _changes(
             _aligned_totals([s for s in series if s.get("account_id") in visible_ids])
         )
+        self._schedule_expiry_refresh(data)
         return data
+
+    def _schedule_expiry_refresh(self, data: NetboiData) -> None:
+        """Re-poll right after the reveal window lapses, so entities flip back
+
+        to censored on time instead of at the next scheduled cycle.
+        """
+        if self._expiry_cancel:
+            self._expiry_cancel()
+            self._expiry_cancel = None
+        exp = data.reveal_expires_at()
+        if data.censored or exp is None:
+            return
+        delay = (exp - dt_util.utcnow()).total_seconds() + 2
+        if delay > 0:
+            self._expiry_cancel = async_call_later(self.hass, delay, self._handle_expiry)
+
+    @callback
+    def _handle_expiry(self, _now: datetime) -> None:
+        self._expiry_cancel = None
+        self.hass.async_create_task(self.async_request_refresh())
+
+    async def async_shutdown(self) -> None:
+        if self._expiry_cancel:
+            self._expiry_cancel()
+            self._expiry_cancel = None
+        await super().async_shutdown()
 
     @property
     def currency(self) -> str:

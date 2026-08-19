@@ -37,7 +37,7 @@ class NetboiCensoredSensor(NetboiEntity, BinarySensorEntity):
 
     @property
     def is_on(self) -> bool:
-        return self.coordinator.data.censored
+        return self.coordinator.data.censored_now()
 
 
 class NetboiStaleSensor(NetboiEntity, BinarySensorEntity):
