@@ -1,8 +1,9 @@
-# netboi for Home Assistant
+# netboi
 
-Display your [netboi](https://netboi.app) net-worth dashboard in Home
-Assistant: the same charts as the web app, rendered by the same code, plus
-censor-safe sensors for automations.
+Your [netboi](https://netboi.app) net-worth dashboard in Home Assistant: the
+same charts as the web app, rendered by the same code, plus censor-safe
+sensors for automations — and a PIN pad on every card to reveal real amounts
+for exactly as long as you choose.
 
 ## How privacy works
 
