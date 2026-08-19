@@ -18892,7 +18892,7 @@ function pY({
         {
           contentStyle: Ef,
           labelFormatter: (j) => Vi(j, !0),
-          formatter: (j) => [p(j), "Net worth"]
+          formatter: (j) => [p(j), "Total"]
         }
       ),
       /* @__PURE__ */ it.jsx(tr, { type: "monotone", dataKey: "total", stroke: "#60a5fa", strokeWidth: 2, fill: "url(#nw)" })
@@ -29375,7 +29375,7 @@ const ih = {
 ah({
   tag: "netboi-worth-card",
   name: "netboi worth chart",
-  description: "Net worth over time — the netboi dashboard chart.",
+  description: "Your total over time — the netboi dashboard chart.",
   component: vP,
   schema: [
     oh,

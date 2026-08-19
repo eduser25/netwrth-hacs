@@ -62,7 +62,7 @@ const compactField = {
 defineCard({
   tag: "netboi-worth-card",
   name: "netboi worth chart",
-  description: "Net worth over time — the netboi dashboard chart.",
+  description: "Your total over time — the netboi dashboard chart.",
   component: WorthCard,
   schema: [
     titleField,

@@ -124,7 +124,7 @@ export default function Chart({
           <Tooltip
             contentStyle={tooltipStyle}
             labelFormatter={(ts) => shortDate(ts as number, true)}
-            formatter={(v) => [fmtVal(v as number), "Net worth"]}
+            formatter={(v) => [fmtVal(v as number), "Total"]}
           />
           <Area type="monotone" dataKey="total" stroke="#60a5fa" strokeWidth={2} fill="url(#nw)" />
         </AreaChart>

@@ -111,7 +111,7 @@ automation:
     action:
       - action: notify.mobile_app_phone
         data:
-          message: "down {{ states('sensor.netboi_total_change_week') }}% this week"
+          message: "net worth down {{ states('sensor.netboi_total_change_week') }}% this week"
 ```
 
 ## Services

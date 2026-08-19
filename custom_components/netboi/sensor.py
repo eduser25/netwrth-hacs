@@ -68,7 +68,7 @@ class NetboiChangeSensor(NetboiEntity, SensorEntity):
         super().__init__(coordinator)
         self._suffix = suffix
         self._attr_unique_id = f"{coordinator.entry.entry_id}_change_{suffix}"
-        self._attr_name = f"Net worth change ({WINDOW_NAMES[suffix]})"
+        self._attr_name = f"Total change ({WINDOW_NAMES[suffix]})"
 
     @property
     def native_value(self) -> float | None:
@@ -139,7 +139,7 @@ class NetboiRealSensor(NetboiEntity, SensorEntity):
 
 
 class NetboiNetWorthSensor(NetboiRealSensor):
-    _attr_name = "Net worth"
+    _attr_name = "Total"
     _attr_icon = "mdi:cash-multiple"
 
     def __init__(self, coordinator: NetboiCoordinator) -> None:
