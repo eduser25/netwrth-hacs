@@ -1,41 +1,26 @@
-# netboi
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/wordmark-dark.svg">
+    <img src="docs/brand/wordmark-light.svg" alt="netboi" height="56">
+  </picture>
+</p>
 
-Your [netboi](https://netboi.app) net-worth dashboard in Home Assistant: the
-same charts as the web app, rendered by the same code, plus censor-safe
-sensors for automations — and a PIN pad on every card to reveal real amounts
-for exactly as long as you choose.
+<p align="center">
+  Your <a href="https://netboi.app">netboi</a> dashboard in Home Assistant —
+  the app's own charts, censored by default, revealed by PIN for a window you control.
+</p>
 
-## How privacy works
-
-Everything is built around netboi's server-side censor mode. Amounts are
-redacted **before they leave your netboi deployment**, rescaled to
-percent-of-net-worth — trends and ratios survive, dollars don't.
-
-- A **censored-only** API key physically cannot receive real amounts. Perfect
-  for a wall tablet: no PIN, no reveal, nothing to leak.
-- A **full-access** API key *still starts censored*. Tapping the lock on any
-  card opens a PIN pad; the PIN is verified by netboi (with brute-force
-  backoff), which opens a reveal window for that key — sticky, or
-  auto-concealing after a configurable number of minutes. Concealing never
-  needs a PIN.
-- Sensor entities only carry censor-safe values (percent changes, shares) by
-  default, because Home Assistant's recorder keeps state history forever.
-  Real-currency sensors are an explicit opt-in.
-- Chart data flows through websocket commands, not recorded entities, so
-  revealed amounts are never written into HA's database.
+<p align="center"><img src="docs/img/worth.png" alt="netboi worth card" width="640"></p>
 
 ## Install
 
-1. HACS → Integrations → ⋮ → *Custom repositories* → add
-   `https://github.com/eduser25/netboi-hacs` as an **Integration**.
-2. Install **netboi**, restart Home Assistant.
-3. In netboi: *Settings → Integrations → New API key*. Pick the scope
-   deliberately (see above) and copy the key.
-4. In HA: *Settings → Devices & services → Add integration → netboi*, paste
-   your deployment URL and the key.
+1. **HACS** → ⋮ → *Custom repositories* → add `https://github.com/eduser25/netboi-hacs` as **Integration**, install, restart.
+2. **netboi** → *Settings → Integrations → New API key*. Two scopes:
+   - `censored only` — can never see real amounts, only percentages. No PIN, nothing to leak. Perfect for wall tablets.
+   - `full access` — still starts censored; real amounts appear only after a PIN reveal, and auto-conceal after a timer.
+3. **HA** → *Settings → Devices & services → Add integration → netboi* → paste URL + key.
 
-The Lovelace card bundle registers itself automatically (storage-mode
-dashboards). YAML-mode dashboards add it manually:
+Cards register themselves. YAML-mode dashboards add the resource manually:
 
 ```yaml
 lovelace:
@@ -44,84 +29,113 @@ lovelace:
       type: module
 ```
 
+## Privacy
+
+Amounts are redacted **server-side, before they leave your netboi deployment**, rescaled to percent-of-total — trends survive, dollars don't. The lock on any card opens a PIN pad; the reveal window is key-level, so unlocking one card unlocks every card on every device, and concealing (never needs a PIN) re-locks them all. Chart data flows over websocket, never recorded entities, so revealed amounts stay out of HA's database.
+
+<p align="center"><img src="docs/img/pinpad.png" alt="PIN reveal over a censored card" width="560"></p>
+
 ## Cards
 
-All cards are in the card picker. Every card header carries the lock control
-(full-access keys only): tap to reveal via PIN pad, tap again to conceal.
+All cards share these options: `entry` (which netboi connection), `title`, `theme: netboi | ha`, `auto_conceal_minutes`.
 
-### `netboi-worth-card`
+### Worth chart — `netboi-worth-card`
 
-The dashboard chart with the web app's views and modes.
+The dashboard chart with the web app's views (day-to-day / investments / everything) and modes.
+
+<p align="center"><img src="docs/img/worth.png" alt="total mode" width="640"></p>
 
 ```yaml
 type: custom:netboi-worth-card
-view: invest        # daily | invest | all
-mode: total         # total | stacked | category | flow (per view)
-range: 6m           # 1d 1w 1m 3m 6m 1y all
-show_controls: true # range/mode selectors in the header
-auto_conceal_minutes: 15   # override the integration default for this card
-theme: netboi       # netboi | ha (follow your HA theme)
+view: all            # daily | invest | all
+mode: total          # total | stacked | category | flow
+range: 6m            # 1d 1w 1m 3m 6m 1y all
+compact: true        # $1.2M axis labels instead of $1,200,000
+show_controls: true  # mode/range selectors in the header
 ```
 
-### `netboi-flow-card`
+**Stacked** breaks the total down by account, debt below the zero line:
 
-Net flow bars (money kept vs burned per day/week/month) over the day-to-day
-accounts — a preset of the worth card.
+<p align="center"><img src="docs/img/stacked.png" alt="stacked mode" width="640"></p>
 
-### `netboi-stat-card`
+**Category** splits retirement vs taxable vs debt:
 
-One big number and its change over a window. Censored, the number stays
-masked but the percent change is real.
+<p align="center"><img src="docs/img/category.png" alt="category mode" width="640"></p>
+
+### Net flow — `netboi-flow-card`
+
+Money kept vs burned per day/week/month over the day-to-day accounts (cash + credit). Balance deltas stand in for income minus spending: green kept, red burned.
+
+<p align="center"><img src="docs/img/flow.png" alt="net flow card" width="640"></p>
+
+```yaml
+type: custom:netboi-flow-card
+range: 3m
+```
+
+### Stat — `netboi-stat-card`
+
+One big number and its change over the window. Censored, the number is masked but the percent change is real.
+
+<p align="center"><img src="docs/img/stat.png" alt="stat card" width="640"></p>
 
 ```yaml
 type: custom:netboi-stat-card
 view: all
 range: 1m
+title: Net worth
 ```
 
-### `netboi-accounts-card`
+### Accounts — `netboi-accounts-card`
 
-Accounts grouped by kind with balances and a sync-freshness dot.
+Grouped by kind, with a sync-freshness dot per account (green fresh, amber stale).
 
-## Entities
+<p align="center"><img src="docs/img/accounts.png" alt="accounts card" width="560"></p>
 
-Censor-safe, always on:
+```yaml
+type: custom:netboi-accounts-card
+view: all
+```
 
-| entity | meaning |
-| --- | --- |
-| `sensor.*_net_worth_change_day/week/month/year` | % change of net worth |
-| `sensor.*_cash/investment/credit/loan/other_share` | kind's share of net worth (%) |
-| `sensor.*_last_balance_update` | newest balance timestamp |
-| `sensor.*_accounts` | visible account count |
-| `binary_sensor.*_censored` | whether amounts are currently censored |
-| `binary_sensor.*_data_stale` | no balance newer than 48 h |
+## Sensors
 
-Real-currency (`Net worth`, per-kind totals): enable *Expose real-currency
-sensors* in the integration options (full-access keys only), then enable the
-entities you want. They read *unavailable* while censored — and while
-revealed, their values land in HA history. That's the trade you're opting
-into.
+Censor-safe, always available: total change % (day/week/month/year), per-kind shares %, last balance update, account count, `binary_sensor` censored + data-stale. Real-currency sensors are an explicit opt-in in the integration options — they write real amounts into HA's recorder history while revealed.
+
+```yaml
+# alert on a bad week
+automation:
+  - trigger:
+      - platform: numeric_state
+        entity_id: sensor.netboi_total_change_week
+        below: -5
+    action:
+      - action: notify.mobile_app_phone
+        data:
+          message: "down {{ states('sensor.netboi_total_change_week') }}% this week"
+```
 
 ## Services
 
-- `netboi.reveal` — `code` (PIN), optional `ttl_minutes` (0 = sticky),
-  optional `entry_id`.
-- `netboi.conceal` — optional `entry_id`. Handy in automations:
-  conceal every night, or when your presence sensor says guests are over.
+`netboi.reveal` (fields: `code`, optional `ttl_minutes`, `entry_id`) and `netboi.conceal`:
+
+```yaml
+# re-censor every screen at night
+automation:
+  - trigger:
+      - platform: time
+        at: "22:00:00"
+    action:
+      - action: netboi.conceal
+```
 
 ## Options
 
-*Settings → Devices & services → netboi → Configure*: polling interval
-(default 15 min), default auto-conceal window (default 15 min, 0 = sticky),
-real-currency sensor opt-in.
+*Devices & services → netboi → Configure*: polling interval (15 min), default auto-conceal window (15 min, 0 = stay revealed), real-currency sensor opt-in.
 
 ## Development
 
 ```sh
-cd cards
-npm install
-npm run build   # emits custom_components/netboi/frontend/netboi-cards.js
+cd cards && npm install && npm run build   # emits custom_components/netboi/frontend/netboi-cards.js
 ```
 
-The chart components under `cards/src/components` and `cards/src/lib` are
-vendored from the netboi web app so the rendering stays code-identical.
+Chart components under `cards/src/{components,lib}` are vendored from the netboi web app — the rendering is code-identical. Screenshots show demo data.
