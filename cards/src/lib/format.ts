@@ -18,6 +18,18 @@ export function money(v: number, cents = false): string {
   return (cents ? usdCents : usd).format(v);
 }
 
+const usdCompact = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+
+// Axis-friendly short notation: $950K, $1.2M.
+export function moneyCompact(v: number): string {
+  return usdCompact.format(v);
+}
+
 export function signedMoney(v: number): string {
   return `${v >= 0 ? "+" : ""}${usd.format(v)}`;
 }

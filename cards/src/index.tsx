@@ -53,6 +53,11 @@ const concealField = {
   label: "Auto-conceal after reveal (minutes, 0 = stay revealed)",
   selector: { number: { min: 0, max: 43200, mode: "box" } },
 };
+const compactField = {
+  name: "compact",
+  label: "Short axis amounts ($1.2M instead of $1,200,000)",
+  selector: { boolean: {} },
+};
 
 defineCard({
   tag: "netboi-worth-card",
@@ -80,6 +85,7 @@ defineCard({
     },
     rangeField,
     controlsField,
+    compactField,
     concealField,
     themeField,
   ],
@@ -93,7 +99,7 @@ defineCard({
   description: "Money kept vs burned per day/week/month (day-to-day accounts).",
   component: WorthCard,
   defaults: { view: "daily", mode: "flow" },
-  schema: [titleField, entryField, rangeField, controlsField, concealField, themeField],
+  schema: [titleField, entryField, rangeField, controlsField, compactField, concealField, themeField],
   stub: { range: "3m" },
   size: 6,
 });

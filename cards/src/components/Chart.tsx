@@ -14,9 +14,27 @@ import {
 } from "recharts";
 import { Account, ChartMode, RangeKey } from "../lib/types";
 import { Row, debtOfRow, flowSeries, sumRow } from "../lib/series";
-import { money, pct, shortDate, signedMoney } from "../lib/format";
+import { money, moneyCompact, pct, shortDate, signedMoney } from "../lib/format";
 
 export type { ChartMode };
+
+// Y-axis width sized to what the ticks actually render (Recharts has no
+// auto-fit), so the plot area claims the rest of the card.
+function yAxisWidth(fmt: (v: number) => string, values: (number | null)[]): number {
+  let lo = 0;
+  let hi = 0;
+  for (const v of values) {
+    if (v == null || !isFinite(v)) continue;
+    if (v < lo) lo = v;
+    if (v > hi) hi = v;
+  }
+  let maxLen = 1;
+  for (const v of [lo, hi]) maxLen = Math.max(maxLen, fmt(v).length);
+  return Math.min(90, Math.ceil(maxLen * 7) + 14);
+}
+
+// Recharts' default margins add dead space on top of the axis width.
+const MARGIN = { top: 8, right: 12, bottom: 0, left: 0 };
 
 const PALETTE = [
   "#60a5fa", "#34d399", "#fbbf24", "#f472b6", "#a78bfa",
@@ -38,12 +56,14 @@ export default function Chart({
   mode,
   range,
   masked = false,
+  compact = true,
 }: {
   rows: Row[];
   accounts: Account[];
   mode: ChartMode;
   range: RangeKey;
   masked?: boolean;
+  compact?: boolean;
 }) {
   const withTime = range === "1d" || range === "1w";
   const fmtX = (ts: number) => shortDate(ts, withTime);
@@ -53,18 +73,20 @@ export default function Chart({
   // stacking per-account % changes would be meaningless.
   const rel = (v: number, base: number) =>
     base !== 0 ? (v - base) / Math.abs(base) : null;
-  const fmtY = (v: number) => (masked ? pct(v) : money(v));
+  const axisMoney = compact ? moneyCompact : money;
+  const fmtY = (v: number) => (masked ? pct(v) : axisMoney(v));
   const fmtVal = (v: number) => (masked ? pct(v) : money(v, true));
 
   if (mode === "flow") {
     const data = flowSeries(rows, accounts, range);
     const fmtFlow = (v: number) => (masked ? v.toFixed(2) : signedMoney(v));
+    const fmtYFlow = (v: number) => (masked ? v.toFixed(1) : axisMoney(v));
     return (
       <ResponsiveContainer width="100%" height={340}>
-        <BarChart data={data}>
+        <BarChart data={data} margin={MARGIN}>
           <CartesianGrid stroke="#223047" strokeDasharray="3 3" />
           <XAxis dataKey="ts" tickFormatter={(ts) => shortDate(ts as number)} tick={axisStyle} minTickGap={40} />
-          <YAxis tickFormatter={(v) => (masked ? (v as number).toFixed(1) : money(v as number))} tick={axisStyle} width={90} />
+          <YAxis tickFormatter={(v) => fmtYFlow(v as number)} tick={axisStyle} width={yAxisWidth(fmtYFlow, data.map((d) => d.flow))} />
           <Tooltip
             contentStyle={tooltipStyle}
             labelFormatter={(ts) => shortDate(ts as number)}
@@ -89,7 +111,7 @@ export default function Chart({
     });
     return (
       <ResponsiveContainer width="100%" height={340}>
-        <AreaChart data={data}>
+        <AreaChart data={data} margin={MARGIN}>
           <defs>
             <linearGradient id="nw" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#60a5fa" stopOpacity={0.35} />
@@ -98,7 +120,7 @@ export default function Chart({
           </defs>
           <CartesianGrid stroke="#223047" strokeDasharray="3 3" />
           <XAxis dataKey="ts" tickFormatter={fmtX} tick={axisStyle} minTickGap={40} />
-          <YAxis tickFormatter={fmtY} tick={axisStyle} width={90} domain={["auto", "auto"]} />
+          <YAxis tickFormatter={fmtY} tick={axisStyle} width={yAxisWidth(fmtY, data.map((d) => d.total))} domain={["auto", "auto"]} />
           <Tooltip
             contentStyle={tooltipStyle}
             labelFormatter={(ts) => shortDate(ts as number, true)}
@@ -132,10 +154,15 @@ export default function Chart({
     });
     return (
       <ResponsiveContainer width="100%" height={340}>
-        <LineChart data={data}>
+        <LineChart data={data} margin={MARGIN}>
           <CartesianGrid stroke="#223047" strokeDasharray="3 3" />
           <XAxis dataKey="ts" tickFormatter={fmtX} tick={axisStyle} minTickGap={40} />
-          <YAxis tickFormatter={fmtY} tick={axisStyle} width={90} domain={["auto", "auto"]} />
+          <YAxis
+            tickFormatter={fmtY}
+            tick={axisStyle}
+            width={yAxisWidth(fmtY, data.flatMap((d) => [d.retirement, d.other, d.debt]))}
+            domain={["auto", "auto"]}
+          />
           <Tooltip
             contentStyle={tooltipStyle}
             labelFormatter={(ts) => shortDate(ts as number, true)}
@@ -150,7 +177,7 @@ export default function Chart({
   }
 
   // stacked mode below: censored values stay on the %-of-net-worth scale
-  const fmtYStacked = (v: number) => (masked ? v.toFixed(1) : money(v));
+  const fmtYStacked = (v: number) => (masked ? v.toFixed(1) : axisMoney(v));
   const fmtValStacked = (v: number) => (masked ? v.toFixed(2) : money(v, true));
 
   // stacked: assets stack as areas; debt (if any) drawn as a line below zero
@@ -165,12 +192,17 @@ export default function Chart({
     if (hasDebt) d.debt = debtOfRow(r, accounts);
     return d;
   });
+  // Axis extent for the stack: sum of assets per row, debt below zero.
+  const stackExtent = data.flatMap((d) => [
+    assetAccounts.reduce((sum, a) => sum + ((d[`a${a.id}`] as number) ?? 0), 0),
+    (d.debt as number) ?? 0,
+  ]);
   return (
     <ResponsiveContainer width="100%" height={340}>
-      <AreaChart data={data}>
+      <AreaChart data={data} margin={MARGIN}>
         <CartesianGrid stroke="#223047" strokeDasharray="3 3" />
         <XAxis dataKey="ts" tickFormatter={fmtX} tick={axisStyle} minTickGap={40} />
-        <YAxis tickFormatter={fmtYStacked} tick={axisStyle} width={90} domain={["auto", "auto"]} />
+        <YAxis tickFormatter={fmtYStacked} tick={axisStyle} width={yAxisWidth(fmtYStacked, stackExtent)} domain={["auto", "auto"]} />
         <Tooltip
           contentStyle={tooltipStyle}
           labelFormatter={(ts) => shortDate(ts as number, true)}

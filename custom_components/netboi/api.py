@@ -62,9 +62,12 @@ class NetboiClient:
         out = await self._request("GET", "/api/accounts")
         return out.get("accounts", [])
 
-    async def series(self, range_key: str = "all") -> list[dict[str, Any]]:
-        out = await self._request("GET", f"/api/series?range={range_key}")
-        return out.get("series", [])
+    async def series(self, range_key: str = "all") -> dict[str, Any]:
+        """Full response: {"series": [...], "censored": bool} — the flag is
+        stamped by the backend in the same response as the data, so the pair
+        is atomic (a separately-fetched flag can be from another instant).
+        """
+        return await self._request("GET", f"/api/series?range={range_key}")
 
     async def reveal(self, code: str, ttl_seconds: int = 0) -> dict[str, Any]:
         payload: dict[str, Any] = {"code": code}

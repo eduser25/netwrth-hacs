@@ -152,7 +152,7 @@ class NetboiCoordinator(DataUpdateCoordinator[NetboiData]):
         try:
             me = await self.client.me()
             accounts = await self.client.accounts()
-            series = await self.client.series("1y")
+            series = (await self.client.series("1y")).get("series", [])
         except NetboiAuthError as err:
             raise UpdateFailed(f"API key rejected: {err}") from err
         except NetboiError as err:
@@ -218,7 +218,9 @@ class NetboiCoordinator(DataUpdateCoordinator[NetboiData]):
     @callback
     def _handle_expiry(self, _now: datetime) -> None:
         self._expiry_cancel = None
-        self.hass.async_create_task(self.async_request_refresh())
+        # async_refresh, not async_request_refresh: the debouncer's 10s
+        # cooldown would delay the re-censor flip that cards are waiting on.
+        self.hass.async_create_task(self.async_refresh())
 
     async def async_shutdown(self) -> None:
         if self._expiry_cancel:

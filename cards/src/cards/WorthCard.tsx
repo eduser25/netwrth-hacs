@@ -17,6 +17,8 @@ export type WorthCardConfig = BaseCardConfig & {
   mode?: ChartMode;
   range?: RangeKey;
   show_controls?: boolean;
+  // Short K/M notation on the y-axis (default on); tooltips stay exact.
+  compact?: boolean;
 };
 
 // The flagship chart card: the web dashboard's views (day-to-day /
@@ -73,7 +75,14 @@ export default function WorthCard({
         <div className="status">No data for this view yet.</div>
       )}
       {!error && overview && series && rows.length > 0 && (
-        <Chart rows={rows} accounts={accounts} mode={mode} range={range} masked={masked} />
+        <Chart
+          rows={rows}
+          accounts={accounts}
+          mode={mode}
+          range={range}
+          masked={masked}
+          compact={config.compact !== false}
+        />
       )}
     </div>
   );

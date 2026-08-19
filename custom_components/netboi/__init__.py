@@ -95,7 +95,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 raise HomeAssistantError(str(err)) from err
             except NetboiError as err:
                 raise HomeAssistantError(f"reveal failed: {err}") from err
-            await rt.coordinator.async_request_refresh()
+            await rt.coordinator.async_refresh()
 
     async def _conceal(call: ServiceCall) -> None:
         for rt in _runtimes(hass, call.data.get("entry_id")):
@@ -103,7 +103,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 await rt.client.conceal()
             except NetboiError as err:
                 raise HomeAssistantError(f"conceal failed: {err}") from err
-            await rt.coordinator.async_request_refresh()
+            await rt.coordinator.async_refresh()
 
     if not hass.services.has_service(DOMAIN, SERVICE_REVEAL):
         hass.services.async_register(DOMAIN, SERVICE_REVEAL, _reveal, schema=REVEAL_SCHEMA)

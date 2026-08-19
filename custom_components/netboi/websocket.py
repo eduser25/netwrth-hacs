@@ -130,12 +130,17 @@ async def ws_series(hass: HomeAssistant, connection, msg: dict[str, Any]) -> Non
         connection.send_result(msg["id"], cached[1])
         return
     try:
-        series = await rt.client.series(msg["range"])
+        out = await rt.client.series(msg["range"])
     except NetboiError as err:
         connection.send_error(msg["id"], "netboi_error", str(err))
         return
     data = rt.coordinator.data
-    result = {"series": series, "censored": data.censored_now() if data else True}
+    # Prefer the flag the backend stamped into this very response; older
+    # backends without it fall back to the coordinator snapshot.
+    censored = out.get("censored")
+    if censored is None:
+        censored = data.censored_now() if data else True
+    result = {"series": out.get("series", []), "censored": censored}
     valid_until = time.monotonic() + SERIES_CACHE_SECONDS
     exp = data.reveal_expires_at() if data else None
     if exp is not None:
@@ -177,7 +182,10 @@ async def ws_reveal(hass: HomeAssistant, connection, msg: dict[str, Any]) -> Non
     # EVENT_CENSOR_CHANGED once fresh data is in place, so subscribed cards
     # never refetch into a stale snapshot.
     _invalidate_cache(rt.coordinator.entry.entry_id)
-    await rt.coordinator.async_request_refresh()
+    # async_refresh bypasses the coordinator's request debouncer (10s
+    # cooldown): a human just acted, so the flip event and fresh snapshot
+    # must land now, not whenever the cooldown lapses.
+    await rt.coordinator.async_refresh()
     connection.send_result(msg["id"], {"ok": True, **out})
 
 
@@ -199,5 +207,8 @@ async def ws_conceal(hass: HomeAssistant, connection, msg: dict[str, Any]) -> No
         connection.send_error(msg["id"], "netboi_error", str(err))
         return
     _invalidate_cache(rt.coordinator.entry.entry_id)
-    await rt.coordinator.async_request_refresh()
+    # async_refresh bypasses the coordinator's request debouncer (10s
+    # cooldown): a human just acted, so the flip event and fresh snapshot
+    # must land now, not whenever the cooldown lapses.
+    await rt.coordinator.async_refresh()
     connection.send_result(msg["id"], {"ok": True, **out})
