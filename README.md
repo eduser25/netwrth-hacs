@@ -39,7 +39,7 @@ Amounts are redacted **server-side, before they leave your netboi deployment**, 
 
 All cards share these options: `entry` (which netboi connection), `title`, `theme: netboi | ha`, `auto_conceal_minutes`.
 
-### Worth chart — `netboi-worth-card`
+### Total over time — `netboi-worth-card`
 
 The dashboard chart with the web app's views (day-to-day / investments / everything) and modes.
 
@@ -83,7 +83,7 @@ One big number and its change over the window. Censored, the number is masked bu
 type: custom:netboi-stat-card
 view: all
 range: 1m
-title: Net worth
+title: Total
 ```
 
 ### Accounts — `netboi-accounts-card`
@@ -111,7 +111,7 @@ automation:
     action:
       - action: notify.mobile_app_phone
         data:
-          message: "net worth down {{ states('sensor.netboi_total_change_week') }}% this week"
+          message: "balances down {{ states('sensor.netboi_total_change_week') }}% this week"
 ```
 
 ## Services
