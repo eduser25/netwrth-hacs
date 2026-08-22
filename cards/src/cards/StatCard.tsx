@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Hass } from "../lib/ha";
-import { MASK, money, pct } from "../lib/format";
+import { MASK, money, pct, signedMoney } from "../lib/format";
 import { alignSeries, sumRow } from "../lib/series";
 import { RANGES, RangeKey } from "../lib/types";
 import { VIEWS, ViewKey } from "../lib/views";
@@ -40,8 +40,14 @@ export default function StatCard({
     if (rows.length === 0) return null;
     const first = sumRow(rows[0], accounts);
     const last = sumRow(rows[rows.length - 1], accounts);
-    return { last, delta: first !== 0 ? (last - first) / Math.abs(first) : null };
+    return {
+      last,
+      diff: last - first,
+      delta: first !== 0 ? (last - first) / Math.abs(first) : null,
+    };
   }, [series, accounts]);
+
+  const showDelta = stat != null && stat.delta != null && !view.flow;
 
   return (
     <div className="card">
@@ -64,12 +70,23 @@ export default function StatCard({
       </div>
       {error && <div className="error-box">{error}</div>}
       {!error && !stat && <div className="status">Loading…</div>}
-      {!error && stat && (
+      {!error && stat && masked && (
+        // Censored: the dollar amount is redacted anyway, so promote the real
+        // percent change to the big slot and drop the footer line entirely.
+        <div
+          className={`stat-value ${
+            showDelta ? (stat.delta! >= 0 ? "up" : "down") : ""
+          }`}
+        >
+          {showDelta ? pct(stat.delta!) : MASK}
+        </div>
+      )}
+      {!error && stat && !masked && (
         <>
-          <div className="stat-value">{masked ? MASK : money(stat.last)}</div>
-          {stat.delta != null && !view.flow && (
-            <div className={`stat-delta ${stat.delta >= 0 ? "up" : "down"}`}>
-              {pct(stat.delta)} over {range}
+          <div className="stat-value">{money(stat.last)}</div>
+          {showDelta && (
+            <div className={`stat-delta ${stat.delta! >= 0 ? "up" : "down"}`}>
+              {signedMoney(stat.diff)} ({pct(stat.delta!)}) over {range}
             </div>
           )}
         </>

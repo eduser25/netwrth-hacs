@@ -119,8 +119,8 @@ defineCard({
   name: "netboi accounts",
   description: "Accounts grouped by kind with balances and sync freshness.",
   component: AccountsCard,
-  schema: [titleField, entryField, viewField, concealField, themeField],
-  stub: { view: "all" },
+  schema: [titleField, entryField, viewField, rangeField, controlsField, concealField, themeField],
+  stub: { view: "all", range: "1m" },
   size: 4,
 });
 

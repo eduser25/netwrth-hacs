@@ -47,7 +47,8 @@ export function cardCss(mode: ThemeMode): string {
   .head {
     display: flex;
     align-items: center;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 8px 10px;
     margin-bottom: 10px;
   }
   .head h2 {
@@ -60,7 +61,9 @@ export function cardCss(mode: ThemeMode): string {
     flex: 1;
   }
   .muted { color: var(--nb-muted); }
-  .controls { display: flex; gap: 6px; flex-wrap: wrap; }
+  /* margin-left auto keeps the toggles pinned to the right edge even when a
+     narrow card wraps them onto their own line under the title. */
+  .controls { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
   .seg {
     display: inline-flex;
     border: 1px solid var(--nb-border);
@@ -82,8 +85,8 @@ export function cardCss(mode: ThemeMode): string {
     border: 1px solid var(--nb-border);
     border-radius: 8px;
     color: var(--nb-muted);
-    width: 30px;
-    height: 26px;
+    width: 34px;
+    height: 30px;
     cursor: pointer;
     font-size: 13px;
     line-height: 1;
@@ -111,6 +114,7 @@ export function cardCss(mode: ThemeMode): string {
   td, th { padding: 6px 4px; text-align: left; font-size: 13px; }
   td.num { text-align: right; font-variant-numeric: tabular-nums; }
   tr + tr td { border-top: 1px solid var(--nb-border); }
+  td.row-delta { font-size: 12px; width: 1%; white-space: nowrap; padding-left: 10px; }
   .kind-row td {
     color: var(--nb-muted);
     text-transform: uppercase;
@@ -131,16 +135,18 @@ export function cardCss(mode: ThemeMode): string {
   /* pin pad overlay */
   .pin-wrap {
     position: absolute;
-    top: 44px;
+    top: 48px;
     right: 12px;
     z-index: 20;
   }
   .pinpad {
     background: var(--nb-bg);
-    border: 1px solid var(--nb-border);
+    border: 1px solid color-mix(in srgb, var(--nb-green) 45%, var(--nb-border));
     border-radius: 12px;
     padding: 14px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45),
+      0 0 0 1px color-mix(in srgb, var(--nb-green) 18%, transparent),
+      0 0 16px color-mix(in srgb, var(--nb-green) 25%, transparent);
   }
   .pin-label {
     text-align: center;

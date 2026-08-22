@@ -1,17 +1,22 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Hass } from "../lib/ha";
-import { money } from "../lib/format";
-import { Account } from "../lib/types";
+import { money, pct } from "../lib/format";
+import { Account, RANGES, RangeKey } from "../lib/types";
 import { VIEWS, ViewKey } from "../lib/views";
 import {
   BaseCardConfig,
   LockControl,
+  Segmented,
   isStale,
   useNetboi,
   useVisibleAccounts,
 } from "./common";
 
-export type AccountsCardConfig = BaseCardConfig & { view?: ViewKey };
+export type AccountsCardConfig = BaseCardConfig & {
+  view?: ViewKey;
+  range?: RangeKey;
+  show_controls?: boolean;
+};
 
 const KIND_ORDER = ["cash", "investment", "credit", "loan", "other"] as const;
 
@@ -31,9 +36,27 @@ export default function AccountsCard({
   config: AccountsCardConfig;
 }) {
   const view = VIEWS.find((v) => v.key === (config.view ?? "all")) ?? VIEWS[2];
-  const { overview, masked, error, refresh } = useNetboi(hass, config.entry, "1m");
+  const [range, setRange] = useState<RangeKey>(config.range ?? "1m");
+  const { overview, series, masked, error, refresh } = useNetboi(hass, config.entry, range);
   const visible = useVisibleAccounts(overview);
   const accounts = useMemo(() => visible.filter(view.pick), [visible, view]);
+
+  // Change over the selected window, per account. Censored values are
+  // rescaled proportionally server-side, so the percent survives masking.
+  const deltas = useMemo(() => {
+    const m = new Map<number, number>();
+    if (!series) return m;
+    for (const s of series) {
+      if (s.points.length < 2) continue;
+      const pts = [...s.points].sort(
+        (a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime()
+      );
+      const first = parseFloat(pts[0].balance);
+      const last = parseFloat(pts[pts.length - 1].balance);
+      if (first !== 0) m.set(s.account_id, (last - first) / Math.abs(first));
+    }
+    return m;
+  }, [series]);
 
   const groups = useMemo(
     () =>
@@ -48,6 +71,11 @@ export default function AccountsCard({
     <div className="card">
       <div className="head">
         <h2>{config.title ?? "Accounts"}</h2>
+        {config.show_controls !== false && (
+          <span className="controls">
+            <Segmented options={RANGES} value={range} onChange={setRange} />
+          </span>
+        )}
         {overview && (
           <LockControl
             hass={hass}
@@ -67,7 +95,13 @@ export default function AccountsCard({
         <table>
           <tbody>
             {groups.map((g) => (
-              <FragmentRows key={g.kind} kind={g.kind} accounts={g.accounts} masked={masked} />
+              <FragmentRows
+                key={g.kind}
+                kind={g.kind}
+                accounts={g.accounts}
+                masked={masked}
+                deltas={deltas}
+              />
             ))}
           </tbody>
         </table>
@@ -80,26 +114,34 @@ function FragmentRows({
   kind,
   accounts,
   masked,
+  deltas,
 }: {
   kind: string;
   accounts: Account[];
   masked: boolean;
+  deltas: Map<number, number>;
 }) {
   return (
     <>
       <tr className="kind-row">
-        <td colSpan={2}>{kind}</td>
+        <td colSpan={3}>{kind}</td>
       </tr>
-      {accounts.map((a) => (
-        <tr key={a.id}>
-          <td>
-            <span className={`dot ${isStale(a.balance_at) ? "stale" : ""}`} />
-            {a.nickname || a.name}
-            <span className="muted"> · {a.org_name || a.org_domain}</span>
-          </td>
-          <td className="num">{balanceLabel(a, masked)}</td>
-        </tr>
-      ))}
+      {accounts.map((a) => {
+        const delta = deltas.get(a.id);
+        return (
+          <tr key={a.id}>
+            <td>
+              <span className={`dot ${isStale(a.balance_at) ? "stale" : ""}`} />
+              {a.nickname || a.name}
+              <span className="muted"> · {a.org_name || a.org_domain}</span>
+            </td>
+            <td className="num">{balanceLabel(a, masked)}</td>
+            <td className={`num row-delta ${delta == null ? "muted" : delta >= 0 ? "up" : "down"}`}>
+              {delta == null ? "–" : pct(delta)}
+            </td>
+          </tr>
+        );
+      })}
     </>
   );
 }
