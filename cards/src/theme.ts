@@ -61,9 +61,18 @@ export function cardCss(mode: ThemeMode): string {
     flex: 1;
   }
   .muted { color: var(--nb-muted); }
-  /* margin-left auto keeps the toggles pinned to the right edge even when a
-     narrow card wraps them onto their own line under the title. */
-  .controls { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
+  /* Toggles + lock live in one right-aligned group; margin-left auto keeps it
+     pinned to the right edge even when a narrow card wraps it onto its own
+     line under the title. */
+  .head-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-left: auto;
+  }
+  .controls { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
   .seg {
     display: inline-flex;
     border: 1px solid var(--nb-border);

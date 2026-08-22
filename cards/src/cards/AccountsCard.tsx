@@ -71,20 +71,22 @@ export default function AccountsCard({
     <div className="card">
       <div className="head">
         <h2>{config.title ?? "Accounts"}</h2>
-        {config.show_controls !== false && (
-          <span className="controls">
-            <Segmented options={RANGES} value={range} onChange={setRange} />
-          </span>
-        )}
-        {overview && (
-          <LockControl
-            hass={hass}
-            entry={config.entry}
-            overview={overview}
-            autoConcealMinutes={config.auto_conceal_minutes}
-            onChanged={refresh}
-          />
-        )}
+        <span className="head-right">
+          {config.show_controls !== false && (
+            <span className="controls">
+              <Segmented options={RANGES} value={range} onChange={setRange} />
+            </span>
+          )}
+          {overview && (
+            <LockControl
+              hass={hass}
+              entry={config.entry}
+              overview={overview}
+              autoConcealMinutes={config.auto_conceal_minutes}
+              onChanged={refresh}
+            />
+          )}
+        </span>
       </div>
       {error && <div className="error-box">{error}</div>}
       {!error && !overview && <div className="status">Loading…</div>}

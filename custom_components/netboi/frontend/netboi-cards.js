@@ -680,17 +680,19 @@ function r3({
   return /* @__PURE__ */ it.jsxs("div", { className: "card", children: [
     /* @__PURE__ */ it.jsxs("div", { className: "head", children: [
       /* @__PURE__ */ it.jsx("h2", { children: e.title ?? "Accounts" }),
-      e.show_controls !== !1 && /* @__PURE__ */ it.jsx("span", { className: "controls", children: /* @__PURE__ */ it.jsx(jf, { options: Qb, value: r, onChange: o }) }),
-      l && /* @__PURE__ */ it.jsx(
-        Jb,
-        {
-          hass: t,
-          entry: e.entry,
-          overview: l,
-          autoConcealMinutes: e.auto_conceal_minutes,
-          onChanged: d
-        }
-      )
+      /* @__PURE__ */ it.jsxs("span", { className: "head-right", children: [
+        e.show_controls !== !1 && /* @__PURE__ */ it.jsx("span", { className: "controls", children: /* @__PURE__ */ it.jsx(jf, { options: Qb, value: r, onChange: o }) }),
+        l && /* @__PURE__ */ it.jsx(
+          Jb,
+          {
+            hass: t,
+            entry: e.entry,
+            overview: l,
+            autoConcealMinutes: e.auto_conceal_minutes,
+            onChanged: d
+          }
+        )
+      ] })
     ] }),
     h && /* @__PURE__ */ it.jsx("div", { className: "error-box", children: h }),
     !h && !l && /* @__PURE__ */ it.jsx("div", { className: "status", children: "Loading…" }),
@@ -799,17 +801,19 @@ function o3({
   return /* @__PURE__ */ it.jsxs("div", { className: "card", children: [
     /* @__PURE__ */ it.jsxs("div", { className: "head", children: [
       /* @__PURE__ */ it.jsx("h2", { children: e.title ?? n.label }),
-      e.show_controls !== !1 && /* @__PURE__ */ it.jsx("span", { className: "controls", children: /* @__PURE__ */ it.jsx(jf, { options: Qb, value: r, onChange: o }) }),
-      l && /* @__PURE__ */ it.jsx(
-        Jb,
-        {
-          hass: t,
-          entry: e.entry,
-          overview: l,
-          autoConcealMinutes: e.auto_conceal_minutes,
-          onChanged: d
-        }
-      )
+      /* @__PURE__ */ it.jsxs("span", { className: "head-right", children: [
+        e.show_controls !== !1 && /* @__PURE__ */ it.jsx("span", { className: "controls", children: /* @__PURE__ */ it.jsx(jf, { options: Qb, value: r, onChange: o }) }),
+        l && /* @__PURE__ */ it.jsx(
+          Jb,
+          {
+            hass: t,
+            entry: e.entry,
+            overview: l,
+            autoConcealMinutes: e.auto_conceal_minutes,
+            onChanged: d
+          }
+        )
+      ] })
     ] }),
     h && /* @__PURE__ */ it.jsx("div", { className: "error-box", children: h }),
     !h && !g && /* @__PURE__ */ it.jsx("div", { className: "status", children: "Loading…" }),
@@ -19032,20 +19036,22 @@ function pP({
   return /* @__PURE__ */ it.jsxs("div", { className: "card", children: [
     /* @__PURE__ */ it.jsxs("div", { className: "head", children: [
       /* @__PURE__ */ it.jsx("h2", { children: e.title ?? n.label }),
-      S && /* @__PURE__ */ it.jsxs("span", { className: "controls", children: [
-        n.modes.length > 1 && /* @__PURE__ */ it.jsx(jf, { options: n.modes, value: l, onChange: c }),
-        /* @__PURE__ */ it.jsx(jf, { options: Qb, value: r, onChange: o })
-      ] }),
-      s && /* @__PURE__ */ it.jsx(
-        Jb,
-        {
-          hass: t,
-          entry: e.entry,
-          overview: s,
-          autoConcealMinutes: e.auto_conceal_minutes,
-          onChanged: p
-        }
-      )
+      /* @__PURE__ */ it.jsxs("span", { className: "head-right", children: [
+        S && /* @__PURE__ */ it.jsxs("span", { className: "controls", children: [
+          n.modes.length > 1 && /* @__PURE__ */ it.jsx(jf, { options: n.modes, value: l, onChange: c }),
+          /* @__PURE__ */ it.jsx(jf, { options: Qb, value: r, onChange: o })
+        ] }),
+        s && /* @__PURE__ */ it.jsx(
+          Jb,
+          {
+            hass: t,
+            entry: e.entry,
+            overview: s,
+            autoConcealMinutes: e.auto_conceal_minutes,
+            onChanged: p
+          }
+        )
+      ] })
     ] }),
     y && /* @__PURE__ */ it.jsx("div", { className: "error-box", children: y }),
     !y && (!s || !h) && /* @__PURE__ */ it.jsx("div", { className: "status", children: "Loading…" }),
@@ -29148,9 +29154,18 @@ function OY(t) {
     flex: 1;
   }
   .muted { color: var(--nb-muted); }
-  /* margin-left auto keeps the toggles pinned to the right edge even when a
-     narrow card wraps them onto their own line under the title. */
-  .controls { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
+  /* Toggles + lock live in one right-aligned group; margin-left auto keeps it
+     pinned to the right edge even when a narrow card wraps it onto its own
+     line under the title. */
+  .head-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-left: auto;
+  }
+  .controls { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
   .seg {
     display: inline-flex;
     border: 1px solid var(--nb-border);

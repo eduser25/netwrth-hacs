@@ -51,23 +51,25 @@ export default function WorthCard({
     <div className="card">
       <div className="head">
         <h2>{config.title ?? view.label}</h2>
-        {showControls && (
-          <span className="controls">
-            {view.modes.length > 1 && (
-              <Segmented options={view.modes} value={mode} onChange={setMode} />
-            )}
-            <Segmented options={RANGES} value={range} onChange={setRange} />
-          </span>
-        )}
-        {overview && (
-          <LockControl
-            hass={hass}
-            entry={config.entry}
-            overview={overview}
-            autoConcealMinutes={config.auto_conceal_minutes}
-            onChanged={refresh}
-          />
-        )}
+        <span className="head-right">
+          {showControls && (
+            <span className="controls">
+              {view.modes.length > 1 && (
+                <Segmented options={view.modes} value={mode} onChange={setMode} />
+              )}
+              <Segmented options={RANGES} value={range} onChange={setRange} />
+            </span>
+          )}
+          {overview && (
+            <LockControl
+              hass={hass}
+              entry={config.entry}
+              overview={overview}
+              autoConcealMinutes={config.auto_conceal_minutes}
+              onChanged={refresh}
+            />
+          )}
+        </span>
       </div>
       {error && <div className="error-box">{error}</div>}
       {!error && (!overview || !series) && <div className="status">Loading…</div>}
