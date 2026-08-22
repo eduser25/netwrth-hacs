@@ -59,6 +59,8 @@ export function cardCss(mode: ThemeMode): string {
     letter-spacing: 0.05em;
     color: var(--nb-muted);
     flex: 1;
+    /* Never wrap the title; the toggle group wraps below it instead. */
+    white-space: nowrap;
   }
   .muted { color: var(--nb-muted); }
   /* Toggles + lock live in one right-aligned group; margin-left auto keeps it

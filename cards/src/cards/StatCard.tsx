@@ -16,6 +16,7 @@ export type StatCardConfig = BaseCardConfig & {
   view?: ViewKey;
   range?: RangeKey;
   show_controls?: boolean;
+  show_range_selector?: boolean;
 };
 
 // One big number + its change over the window. Censored, the number stays
@@ -54,7 +55,7 @@ export default function StatCard({
       <div className="head">
         <h2>{config.title ?? view.label}</h2>
         <span className="head-right">
-          {config.show_controls !== false && (
+          {config.show_controls !== false && config.show_range_selector !== false && (
             <span className="controls">
               <Segmented options={RANGES} value={range} onChange={setRange} />
             </span>

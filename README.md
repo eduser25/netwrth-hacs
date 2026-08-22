@@ -37,7 +37,7 @@ Amounts are redacted **server-side, before they leave your netboi deployment**, 
 
 ## Cards
 
-All cards share these options: `entry` (which netboi connection), `title`, `theme: netboi | ha`, `auto_conceal_minutes`.
+All cards share: `entry` (which netboi connection), `title`, `theme: netboi | ha`, `auto_conceal_minutes`. Anything with a header toggle can also be fixed by config — set the value and hide its selector.
 
 ### Total over time — `netboi-worth-card`
 
@@ -47,11 +47,12 @@ The dashboard chart with the web app's views (day-to-day / investments / everyth
 
 ```yaml
 type: custom:netboi-worth-card
-view: all            # daily | invest | all
-mode: total          # total | stacked | category | flow
-range: 6m            # 1d 1w 1m 3m 6m 1y all
-compact: true        # $1.2M axis labels instead of $1,200,000
-show_controls: true  # mode/range selectors in the header
+view: all                  # daily | invest | all
+mode: total                # total | stacked | category | flow
+range: 6m                  # 1d 1w 1m 3m 6m 1y all
+compact: true              # $1.2M axis labels instead of $1,200,000
+show_mode_selector: false  # pin the mode: hide its toggle
+show_range_selector: false # pin the range: hide its toggle
 ```
 
 **Stacked** breaks the total down by account, debt below the zero line:
@@ -70,31 +71,40 @@ Money kept vs burned per day/week/month over the day-to-day accounts (cash + cre
 
 ```yaml
 type: custom:netboi-flow-card
-range: 3m
+range: 3m                  # + the same selector/pinning options as above
 ```
 
 ### Stat — `netboi-stat-card`
 
-One big number and its change over the window. Censored, the number is masked but the percent change is real.
+One big number, plus the change over the window in dollars and percent. Censored, the real percent change takes the big slot instead.
 
-<p align="center"><img src="docs/img/stat.png" alt="stat card" width="640"></p>
+<p align="center">
+  <img src="docs/img/stat.png" alt="stat card" width="360">
+  <img src="docs/img/stat-censored.png" alt="stat card censored" width="341">
+</p>
 
 ```yaml
 type: custom:netboi-stat-card
+title: Total
 view: all
 range: 1m
-title: Total
+show_range_selector: false # optional: pin the range
 ```
 
 ### Accounts — `netboi-accounts-card`
 
-Grouped by kind, with a sync-freshness dot per account (green fresh, amber stale).
+Grouped by kind: balance, change over the selected window, and a sync-freshness dot (green fresh, amber stale). Censored, balances read as share of the total.
 
 <p align="center"><img src="docs/img/accounts.png" alt="accounts card" width="560"></p>
 
 ```yaml
 type: custom:netboi-accounts-card
 view: all
+range: 1m                  # window for the change column
+show_range_selector: false # optional: pin the range
+accounts:                  # optional: only these (name match, case-insensitive)
+  - Savings
+  - Roth IRA
 ```
 
 ## Sensors

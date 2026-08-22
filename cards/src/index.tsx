@@ -43,9 +43,14 @@ const rangeField = {
     },
   },
 };
-const controlsField = {
-  name: "show_controls",
-  label: "Show range/mode selectors",
+const modeToggleField = {
+  name: "show_mode_selector",
+  label: "Show mode selector",
+  selector: { boolean: {} },
+};
+const rangeToggleField = {
+  name: "show_range_selector",
+  label: "Show range selector",
   selector: { boolean: {} },
 };
 const concealField = {
@@ -84,7 +89,8 @@ defineCard({
       },
     },
     rangeField,
-    controlsField,
+    modeToggleField,
+    rangeToggleField,
     compactField,
     concealField,
     themeField,
@@ -99,7 +105,16 @@ defineCard({
   description: "Money kept vs burned per day/week/month (day-to-day accounts).",
   component: WorthCard,
   defaults: { view: "daily", mode: "flow" },
-  schema: [titleField, entryField, rangeField, controlsField, compactField, concealField, themeField],
+  schema: [
+    titleField,
+    entryField,
+    rangeField,
+    modeToggleField,
+    rangeToggleField,
+    compactField,
+    concealField,
+    themeField,
+  ],
   stub: { range: "3m" },
   size: 6,
 });
@@ -109,7 +124,7 @@ defineCard({
   name: "netboi stat",
   description: "One big number with its change over a window.",
   component: StatCard,
-  schema: [titleField, entryField, viewField, rangeField, controlsField, concealField, themeField],
+  schema: [titleField, entryField, viewField, rangeField, rangeToggleField, concealField, themeField],
   stub: { view: "all", range: "1m" },
   size: 2,
 });
@@ -119,7 +134,20 @@ defineCard({
   name: "netboi accounts",
   description: "Accounts grouped by kind with balances and sync freshness.",
   component: AccountsCard,
-  schema: [titleField, entryField, viewField, rangeField, controlsField, concealField, themeField],
+  schema: [
+    titleField,
+    entryField,
+    viewField,
+    rangeField,
+    rangeToggleField,
+    {
+      name: "accounts",
+      label: "Only these accounts (name match, empty = all)",
+      selector: { text: { multiple: true } },
+    },
+    concealField,
+    themeField,
+  ],
   stub: { view: "all", range: "1m" },
   size: 4,
 });

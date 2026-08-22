@@ -16,6 +16,10 @@ export type AccountsCardConfig = BaseCardConfig & {
   view?: ViewKey;
   range?: RangeKey;
   show_controls?: boolean;
+  show_range_selector?: boolean;
+  // Only show accounts whose nickname or name matches one of these
+  // (case-insensitive substring). Applied on top of the view filter.
+  accounts?: string[];
 };
 
 const KIND_ORDER = ["cash", "investment", "credit", "loan", "other"] as const;
@@ -39,7 +43,21 @@ export default function AccountsCard({
   const [range, setRange] = useState<RangeKey>(config.range ?? "1m");
   const { overview, series, masked, error, refresh } = useNetboi(hass, config.entry, range);
   const visible = useVisibleAccounts(overview);
-  const accounts = useMemo(() => visible.filter(view.pick), [visible, view]);
+  const nameFilter = config.accounts;
+  const accounts = useMemo(() => {
+    let list = visible.filter(view.pick);
+    if (nameFilter && nameFilter.length > 0) {
+      const wanted = nameFilter.map((n) => n.trim().toLowerCase()).filter(Boolean);
+      list = list.filter((a) =>
+        wanted.some(
+          (w) =>
+            (a.nickname ?? "").toLowerCase().includes(w) ||
+            a.name.toLowerCase().includes(w)
+        )
+      );
+    }
+    return list;
+  }, [visible, view, nameFilter]);
 
   // Change over the selected window, per account. Censored values are
   // rescaled proportionally server-side, so the percent survives masking.
@@ -72,7 +90,7 @@ export default function AccountsCard({
       <div className="head">
         <h2>{config.title ?? "Accounts"}</h2>
         <span className="head-right">
-          {config.show_controls !== false && (
+          {config.show_controls !== false && config.show_range_selector !== false && (
             <span className="controls">
               <Segmented options={RANGES} value={range} onChange={setRange} />
             </span>

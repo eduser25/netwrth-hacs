@@ -34,6 +34,17 @@ wait ~30–60 s until https://hassio.in.purrhub.dev responds again. kubectl allo
 live in `.claude/settings.local.json` (use the `kubectl -n home-automation …` argument
 order so they match).
 
+## Demo harness & README screenshots
+
+`cards/demo/index.html` loads the built bundle with a fake `hass` serving seeded demo
+data (Ridgeline Bank etc., PIN `1234`, `?censored=1` to start censored). Serve from the
+repo root with `python3 -m http.server <port>` and open `/cards/demo/`; use
+`window.setCards([[tag, config, width], …])` to stage any card/config combo. README
+screenshots are captured from it via Claude-in-Chrome `zoom` on the card's bounding rect
+(scale = 1568/window.innerWidth) with `save_to_disk`, then copied into `docs/img/`.
+Backgrounded tabs only paint on capture — always take a throwaway capture first, then
+the real one (otherwise charts come out empty).
+
 ## Testing the cards
 
 - Test dashboard: **https://hassio.in.purrhub.dev/lovelace/netboi** (all netboi cards on
