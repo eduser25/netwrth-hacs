@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/wordmark-dark.svg">
-    <img src="docs/brand/wordmark-light.svg" alt="netboi" height="56">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/wordmark-dark.png">
+    <img src="docs/brand/wordmark-light.png" alt="netwrth" height="56">
   </picture>
 </p>
 
@@ -17,11 +17,11 @@
 > (`custom:netboi-worth-card` etc.) are unchanged. Existing installs and
 > dashboards keep working as-is.
 
-<p align="center"><img src="docs/img/worth.png" alt="netboi worth card" width="640"></p>
+<p align="center"><img src="docs/img/worth.png" alt="netwrth worth card" width="640"></p>
 
 ## Install
 
-1. **HACS** → ⋮ → *Custom repositories* → add `https://github.com/eduser25/netboi-hacs` as **Integration**, install, restart.
+1. **HACS** → ⋮ → *Custom repositories* → add `https://github.com/eduser25/netwrth-hacs` as **Integration**, install, restart.
 2. **netwrth** → *Settings → Integrations → New API key*. Two scopes:
    - `censored only` — can never see real amounts, only percentages. No PIN, nothing to leak. Perfect for wall tablets.
    - `full access` — still starts censored; real amounts appear only after a PIN reveal, and auto-conceal after a timer.

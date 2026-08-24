@@ -1,4 +1,4 @@
-# netboi-hacs
+# netwrth-hacs
 
 Home Assistant integration (`custom_components/netboi/`) + React/Recharts Lovelace cards
 (`cards/`) for the netwrth net-worth tracker (display name netwrth; the HA integration
