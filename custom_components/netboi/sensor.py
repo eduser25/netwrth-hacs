@@ -50,7 +50,7 @@ class NetboiEntity(CoordinatorEntity[NetboiCoordinator]):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
             name=entry.title,
-            manufacturer="netboi",
+            manufacturer="netwrth",
             entry_type=DeviceEntryType.SERVICE,
             configuration_url=entry.data.get("base_url"),
         )

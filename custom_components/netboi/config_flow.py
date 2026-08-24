@@ -64,9 +64,9 @@ class NetboiConfigFlow(ConfigFlow, domain=DOMAIN):
                 unique = hashlib.sha256(f"{base_url}|{api_key}".encode()).hexdigest()[:16]
                 await self.async_set_unique_id(unique)
                 self._abort_if_unique_id_configured()
-                label = me.get("label") or "netboi"
+                label = me.get("label") or "netwrth"
                 return self.async_create_entry(
-                    title=f"netboi · {label}",
+                    title=f"netwrth · {label}",
                     data={CONF_BASE_URL: base_url, CONF_API_KEY: api_key},
                 )
         return self.async_show_form(

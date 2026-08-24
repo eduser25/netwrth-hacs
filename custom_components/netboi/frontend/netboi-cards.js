@@ -29406,12 +29406,12 @@ const uh = {
     select: {
       mode: "dropdown",
       options: [
-        { value: "netboi", label: "netboi (dark)" },
+        { value: "netboi", label: "netwrth (dark)" },
         { value: "ha", label: "Follow Home Assistant theme" }
       ]
     }
   }
-}, lh = { name: "entry", label: "netboi connection", selector: {} }, ch = { name: "title", label: "Title", selector: { text: {} } }, u1 = {
+}, lh = { name: "entry", label: "netwrth connection", selector: {} }, ch = { name: "title", label: "Title", selector: { text: {} } }, u1 = {
   name: "view",
   label: "View",
   selector: {
@@ -29452,8 +29452,8 @@ const uh = {
 };
 oh({
   tag: "netboi-worth-card",
-  name: "netboi worth chart",
-  description: "Your total over time — the netboi dashboard chart.",
+  name: "netwrth worth chart",
+  description: "Your total over time — the netwrth dashboard chart.",
   component: pP,
   schema: [
     ch,
@@ -29486,7 +29486,7 @@ oh({
 });
 oh({
   tag: "netboi-flow-card",
-  name: "netboi net flow",
+  name: "netwrth net flow",
   description: "Money kept vs burned per day/week/month (day-to-day accounts).",
   component: pP,
   defaults: { view: "daily", mode: "flow" },
@@ -29505,7 +29505,7 @@ oh({
 });
 oh({
   tag: "netboi-stat-card",
-  name: "netboi stat",
+  name: "netwrth stat",
   description: "One big number with its change over a window.",
   component: u3,
   schema: [ch, lh, u1, fh, sh, hh, uh],
@@ -29514,7 +29514,7 @@ oh({
 });
 oh({
   tag: "netboi-accounts-card",
-  name: "netboi accounts",
+  name: "netwrth accounts",
   description: "Accounts grouped by kind with balances and sync freshness.",
   component: a3,
   schema: [

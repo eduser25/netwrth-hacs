@@ -6,19 +6,26 @@
 </p>
 
 <p align="center">
-  Your <a href="https://netboi.app">netboi</a> dashboard in Home Assistant —
+  Your <a href="https://netboi.app">netwrth</a> dashboard in Home Assistant —
   the app's own charts, censored by default, revealed by PIN for a window you control.
 </p>
+
+> **Note:** netwrth was previously named *netboi*. For backward compatibility the
+> Home Assistant integration domain stays `netboi` — so the
+> `custom_components/netboi/` path, entity ids (`sensor.netboi_*`), services
+> (`netboi.reveal` / `netboi.conceal`), and card element names
+> (`custom:netboi-worth-card` etc.) are unchanged. Existing installs and
+> dashboards keep working as-is.
 
 <p align="center"><img src="docs/img/worth.png" alt="netboi worth card" width="640"></p>
 
 ## Install
 
 1. **HACS** → ⋮ → *Custom repositories* → add `https://github.com/eduser25/netboi-hacs` as **Integration**, install, restart.
-2. **netboi** → *Settings → Integrations → New API key*. Two scopes:
+2. **netwrth** → *Settings → Integrations → New API key*. Two scopes:
    - `censored only` — can never see real amounts, only percentages. No PIN, nothing to leak. Perfect for wall tablets.
    - `full access` — still starts censored; real amounts appear only after a PIN reveal, and auto-conceal after a timer.
-3. **HA** → *Settings → Devices & services → Add integration → netboi* → paste URL + key.
+3. **HA** → *Settings → Devices & services → Add integration → netwrth* → paste URL + key.
 
 Cards register themselves. YAML-mode dashboards add the resource manually:
 
@@ -31,13 +38,13 @@ lovelace:
 
 ## Privacy
 
-Amounts are redacted **server-side, before they leave your netboi deployment**, rescaled to percent-of-total — trends survive, dollars don't. The lock on any card opens a PIN pad; the reveal window is key-level, so unlocking one card unlocks every card on every device, and concealing (never needs a PIN) re-locks them all. Chart data flows over websocket, never recorded entities, so revealed amounts stay out of HA's database.
+Amounts are redacted **server-side, before they leave your netwrth deployment**, rescaled to percent-of-total — trends survive, dollars don't. The lock on any card opens a PIN pad; the reveal window is key-level, so unlocking one card unlocks every card on every device, and concealing (never needs a PIN) re-locks them all. Chart data flows over websocket, never recorded entities, so revealed amounts stay out of HA's database.
 
 <p align="center"><img src="docs/img/pinpad.png" alt="PIN reveal over a censored card" width="560"></p>
 
 ## Cards
 
-All cards share: `entry` (which netboi connection), `title`, `theme: netboi | ha`, `auto_conceal_minutes`. Anything with a header toggle can also be fixed by config — set the value and hide its selector.
+All cards share: `entry` (which netwrth connection), `title`, `theme: netboi | ha`, `auto_conceal_minutes`. Anything with a header toggle can also be fixed by config — set the value and hide its selector.
 
 ### Total over time — `netboi-worth-card`
 
@@ -140,7 +147,7 @@ automation:
 
 ## Options
 
-*Devices & services → netboi → Configure*: polling interval (15 min), default auto-conceal window (15 min, 0 = stay revealed), real-currency sensor opt-in.
+*Devices & services → netwrth → Configure*: polling interval (15 min), default auto-conceal window (15 min, 0 = stay revealed), real-currency sensor opt-in.
 
 ## Development
 
@@ -148,4 +155,4 @@ automation:
 cd cards && npm install && npm run build   # emits custom_components/netboi/frontend/netboi-cards.js
 ```
 
-Chart components under `cards/src/{components,lib}` are vendored from the netboi web app — the rendering is code-identical. Screenshots show demo data.
+Chart components under `cards/src/{components,lib}` are vendored from the netwrth web app — the rendering is code-identical. Screenshots show demo data.

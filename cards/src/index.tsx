@@ -10,14 +10,14 @@ const themeField = {
     select: {
       mode: "dropdown",
       options: [
-        { value: "netboi", label: "netboi (dark)" },
+        { value: "netboi", label: "netwrth (dark)" },
         { value: "ha", label: "Follow Home Assistant theme" },
       ],
     },
   },
 };
 
-const entryField = { name: "entry", label: "netboi connection", selector: {} };
+const entryField = { name: "entry", label: "netwrth connection", selector: {} };
 const titleField = { name: "title", label: "Title", selector: { text: {} } };
 const viewField = {
   name: "view",
@@ -66,8 +66,8 @@ const compactField = {
 
 defineCard({
   tag: "netboi-worth-card",
-  name: "netboi worth chart",
-  description: "Your total over time — the netboi dashboard chart.",
+  name: "netwrth worth chart",
+  description: "Your total over time — the netwrth dashboard chart.",
   component: WorthCard,
   schema: [
     titleField,
@@ -101,7 +101,7 @@ defineCard({
 
 defineCard({
   tag: "netboi-flow-card",
-  name: "netboi net flow",
+  name: "netwrth net flow",
   description: "Money kept vs burned per day/week/month (day-to-day accounts).",
   component: WorthCard,
   defaults: { view: "daily", mode: "flow" },
@@ -121,7 +121,7 @@ defineCard({
 
 defineCard({
   tag: "netboi-stat-card",
-  name: "netboi stat",
+  name: "netwrth stat",
   description: "One big number with its change over a window.",
   component: StatCard,
   schema: [titleField, entryField, viewField, rangeField, rangeToggleField, concealField, themeField],
@@ -131,7 +131,7 @@ defineCard({
 
 defineCard({
   tag: "netboi-accounts-card",
-  name: "netboi accounts",
+  name: "netwrth accounts",
   description: "Accounts grouped by kind with balances and sync freshness.",
   component: AccountsCard,
   schema: [

@@ -1,7 +1,8 @@
 # netboi-hacs
 
 Home Assistant integration (`custom_components/netboi/`) + React/Recharts Lovelace cards
-(`cards/`) for the netboi net-worth tracker. Amounts are censored server-side; the cards
+(`cards/`) for the netwrth net-worth tracker (display name netwrth; the HA integration
+domain remains `netboi` for backward compatibility). Amounts are censored server-side; the cards
 render either real dollars or rescaled percent-of-total values.
 
 ## Build
@@ -20,7 +21,7 @@ the old bundle.
 
 The test HA is https://hassio.in.purrhub.dev — HA Container running as Kubernetes
 StatefulSet `hassio-0`, namespace `home-automation`, on the home cluster (manifests in
-`~/src/home-cluster/kubernetes/apps/home-automation/hassio/`). netboi is NOT installed
+`~/src/home-cluster/kubernetes/apps/home-automation/hassio/`). netwrth is NOT installed
 via HACS there; deploy by copying files into the pod (only port 443 is exposed — no SSH,
 no Samba):
 
@@ -47,7 +48,7 @@ the real one (otherwise charts come out empty).
 
 ## Testing the cards
 
-- Test dashboard: **https://hassio.in.purrhub.dev/lovelace/netboi** (all netboi cards on
+- Test dashboard: **https://hassio.in.purrhub.dev/lovelace/netboi** (all netwrth cards on
   one view). Use Claude-in-Chrome — the user's Chrome is already authenticated against HA.
 - Hard-reload after a deploy (cmd+shift+r) so the new bundle ?v= is picked up.
 - The `hass-mcp` MCP server talks to the same instance: entities

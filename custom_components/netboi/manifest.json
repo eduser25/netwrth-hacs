@@ -1,6 +1,6 @@
 {
   "domain": "netboi",
-  "name": "netboi",
+  "name": "netwrth",
   "codeowners": ["@eduser25"],
   "config_flow": true,
   "dependencies": ["http", "websocket_api", "frontend", "lovelace"],
