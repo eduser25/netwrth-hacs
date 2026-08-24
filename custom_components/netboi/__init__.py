@@ -1,4 +1,4 @@
-"""netboi: net-worth charts and sensors backed by a netboi deployment."""
+"""netwrth: net-worth charts and sensors backed by a netwrth deployment (HA domain stays netboi)."""
 
 from __future__ import annotations
 
@@ -66,7 +66,7 @@ def _runtimes(hass: HomeAssistant, entry_id: str | None) -> list[NetboiRuntime]:
     if entry_id:
         runtimes = [data[entry_id]] if isinstance(data.get(entry_id), NetboiRuntime) else []
     if not runtimes:
-        raise ServiceValidationError("no matching netboi config entry")
+        raise ServiceValidationError("no matching netwrth config entry")
     return runtimes
 
 

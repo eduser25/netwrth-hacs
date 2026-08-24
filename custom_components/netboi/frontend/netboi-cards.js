@@ -29396,7 +29396,7 @@ function oh(t) {
     name: t.name,
     description: t.description,
     preview: !1,
-    documentationURL: "https://github.com/eduser25/netboi-hacs"
+    documentationURL: "https://github.com/eduser25/netwrth-hacs"
   });
 }
 const uh = {

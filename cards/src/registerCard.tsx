@@ -163,6 +163,6 @@ export function defineCard(def: CardDef): void {
     name: def.name,
     description: def.description,
     preview: false,
-    documentationURL: "https://github.com/eduser25/netboi-hacs",
+    documentationURL: "https://github.com/eduser25/netwrth-hacs",
   });
 }
