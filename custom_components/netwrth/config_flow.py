@@ -20,6 +20,7 @@ from .api import NetwrthAuthError, NetwrthClient, NetwrthError
 from .const import (
     CONF_API_KEY,
     CONF_BASE_URL,
+    DEFAULT_BASE_URL,
     DEFAULT_REVEAL_TTL_MINUTES,
     DEFAULT_SCAN_INTERVAL_MINUTES,
     DOMAIN,
@@ -31,14 +32,13 @@ from .const import (
 
 USER_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_BASE_URL): str,
         vol.Required(CONF_API_KEY): str,
     }
 )
 
 
 class NetwrthConfigFlow(ConfigFlow, domain=DOMAIN):
-    """UI setup: base URL + API key, validated against /api/me."""
+    """UI setup: API key only (server is the public netwrth.app), validated against /api/me."""
 
     VERSION = 1
 
@@ -47,10 +47,8 @@ class NetwrthConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
-            base_url = user_input[CONF_BASE_URL].strip().rstrip("/")
+            base_url = DEFAULT_BASE_URL
             api_key = user_input[CONF_API_KEY].strip()
-            if not base_url.startswith(("http://", "https://")):
-                base_url = f"https://{base_url}"
             client = NetwrthClient(async_get_clientsession(self.hass), base_url, api_key)
             try:
                 me = await client.me()

@@ -3,6 +3,9 @@
 DOMAIN = "netwrth"
 
 CONF_BASE_URL = "base_url"
+# All access goes through Cloudflare at the public domain; the config flow
+# no longer asks for a URL.
+DEFAULT_BASE_URL = "https://netwrth.app"
 CONF_API_KEY = "api_key"
 
 OPT_SCAN_INTERVAL = "scan_interval_minutes"

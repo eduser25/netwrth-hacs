@@ -5,13 +5,12 @@
         "title": "Connect to netwrth",
         "description": "Create an API key in netwrth under Settings → Integrations, then paste it here. A censored-only key never exposes real amounts to Home Assistant.",
         "data": {
-          "base_url": "netwrth URL",
           "api_key": "API key"
         }
       }
     },
     "error": {
-      "cannot_connect": "Could not reach netwrth at that URL.",
+      "cannot_connect": "Could not reach netwrth.",
       "invalid_auth": "netwrth rejected the API key."
     },
     "abort": {
