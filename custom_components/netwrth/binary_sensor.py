@@ -14,24 +14,24 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, STALE_AFTER_HOURS
-from .coordinator import NetboiCoordinator
-from .sensor import NetboiEntity
+from .coordinator import NetwrthCoordinator
+from .sensor import NetwrthEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    coordinator: NetboiCoordinator = hass.data[DOMAIN][entry.entry_id].coordinator
-    async_add_entities([NetboiCensoredSensor(coordinator), NetboiStaleSensor(coordinator)])
+    coordinator: NetwrthCoordinator = hass.data[DOMAIN][entry.entry_id].coordinator
+    async_add_entities([NetwrthCensoredSensor(coordinator), NetwrthStaleSensor(coordinator)])
 
 
-class NetboiCensoredSensor(NetboiEntity, BinarySensorEntity):
+class NetwrthCensoredSensor(NetwrthEntity, BinarySensorEntity):
     """On while amounts are censored (percent-of-net-worth scale)."""
 
     _attr_name = "Censored"
     _attr_icon = "mdi:eye-off"
 
-    def __init__(self, coordinator: NetboiCoordinator) -> None:
+    def __init__(self, coordinator: NetwrthCoordinator) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.entry.entry_id}_censored"
 
@@ -40,13 +40,13 @@ class NetboiCensoredSensor(NetboiEntity, BinarySensorEntity):
         return self.coordinator.data.censored_now()
 
 
-class NetboiStaleSensor(NetboiEntity, BinarySensorEntity):
+class NetwrthStaleSensor(NetwrthEntity, BinarySensorEntity):
     """On when no account has synced a balance recently."""
 
     _attr_name = "Data stale"
     _attr_device_class = BinarySensorDeviceClass.PROBLEM
 
-    def __init__(self, coordinator: NetboiCoordinator) -> None:
+    def __init__(self, coordinator: NetwrthCoordinator) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.entry.entry_id}_stale"
 

@@ -8,7 +8,7 @@ import {
   LockControl,
   Segmented,
   isStale,
-  useNetboi,
+  useNetwrth,
   useVisibleAccounts,
 } from "./common";
 
@@ -41,7 +41,7 @@ export default function AccountsCard({
 }) {
   const view = VIEWS.find((v) => v.key === (config.view ?? "all")) ?? VIEWS[2];
   const [range, setRange] = useState<RangeKey>(config.range ?? "1m");
-  const { overview, series, masked, error, refresh } = useNetboi(hass, config.entry, range);
+  const { overview, series, masked, error, refresh } = useNetwrth(hass, config.entry, range);
   const visible = useVisibleAccounts(overview);
   const nameFilter = config.accounts;
   const accounts = useMemo(() => {

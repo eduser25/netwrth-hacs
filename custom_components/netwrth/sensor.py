@@ -20,7 +20,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, OPT_REAL_SENSORS
-from .coordinator import CHANGE_WINDOWS, KINDS, NetboiCoordinator
+from .coordinator import CHANGE_WINDOWS, KINDS, NetwrthCoordinator
 
 WINDOW_NAMES = {"1d": "day", "1w": "week", "1m": "month", "1y": "year"}
 
@@ -28,23 +28,23 @@ WINDOW_NAMES = {"1d": "day", "1w": "week", "1m": "month", "1y": "year"}
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    coordinator: NetboiCoordinator = hass.data[DOMAIN][entry.entry_id].coordinator
+    coordinator: NetwrthCoordinator = hass.data[DOMAIN][entry.entry_id].coordinator
     entities: list[SensorEntity] = [
-        *(NetboiChangeSensor(coordinator, suffix) for suffix, _ in CHANGE_WINDOWS),
-        *(NetboiShareSensor(coordinator, kind) for kind in KINDS),
-        NetboiLastSyncSensor(coordinator),
-        NetboiAccountCountSensor(coordinator),
+        *(NetwrthChangeSensor(coordinator, suffix) for suffix, _ in CHANGE_WINDOWS),
+        *(NetwrthShareSensor(coordinator, kind) for kind in KINDS),
+        NetwrthLastSyncSensor(coordinator),
+        NetwrthAccountCountSensor(coordinator),
     ]
     if entry.options.get(OPT_REAL_SENSORS):
-        entities.append(NetboiNetWorthSensor(coordinator))
-        entities.extend(NetboiKindTotalSensor(coordinator, kind) for kind in KINDS)
+        entities.append(NetwrthNetWorthSensor(coordinator))
+        entities.extend(NetwrthKindTotalSensor(coordinator, kind) for kind in KINDS)
     async_add_entities(entities)
 
 
-class NetboiEntity(CoordinatorEntity[NetboiCoordinator]):
+class NetwrthEntity(CoordinatorEntity[NetwrthCoordinator]):
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator: NetboiCoordinator) -> None:
+    def __init__(self, coordinator: NetwrthCoordinator) -> None:
         super().__init__(coordinator)
         entry = coordinator.entry
         self._attr_device_info = DeviceInfo(
@@ -56,7 +56,7 @@ class NetboiEntity(CoordinatorEntity[NetboiCoordinator]):
         )
 
 
-class NetboiChangeSensor(NetboiEntity, SensorEntity):
+class NetwrthChangeSensor(NetwrthEntity, SensorEntity):
     """Net worth percent change over a window; survives censoring."""
 
     _attr_native_unit_of_measurement = PERCENTAGE
@@ -64,7 +64,7 @@ class NetboiChangeSensor(NetboiEntity, SensorEntity):
     _attr_suggested_display_precision = 2
     _attr_icon = "mdi:trending-up"
 
-    def __init__(self, coordinator: NetboiCoordinator, suffix: str) -> None:
+    def __init__(self, coordinator: NetwrthCoordinator, suffix: str) -> None:
         super().__init__(coordinator)
         self._suffix = suffix
         self._attr_unique_id = f"{coordinator.entry.entry_id}_change_{suffix}"
@@ -75,7 +75,7 @@ class NetboiChangeSensor(NetboiEntity, SensorEntity):
         return self.coordinator.data.changes.get(self._suffix)
 
 
-class NetboiShareSensor(NetboiEntity, SensorEntity):
+class NetwrthShareSensor(NetwrthEntity, SensorEntity):
     """One kind's share of net worth; survives censoring."""
 
     _attr_native_unit_of_measurement = PERCENTAGE
@@ -83,7 +83,7 @@ class NetboiShareSensor(NetboiEntity, SensorEntity):
     _attr_suggested_display_precision = 1
     _attr_icon = "mdi:chart-donut"
 
-    def __init__(self, coordinator: NetboiCoordinator, kind: str) -> None:
+    def __init__(self, coordinator: NetwrthCoordinator, kind: str) -> None:
         super().__init__(coordinator)
         self._kind = kind
         self._attr_unique_id = f"{coordinator.entry.entry_id}_share_{kind}"
@@ -94,11 +94,11 @@ class NetboiShareSensor(NetboiEntity, SensorEntity):
         return self.coordinator.data.kind_shares.get(self._kind)
 
 
-class NetboiLastSyncSensor(NetboiEntity, SensorEntity):
+class NetwrthLastSyncSensor(NetwrthEntity, SensorEntity):
     _attr_device_class = SensorDeviceClass.TIMESTAMP
     _attr_name = "Last balance update"
 
-    def __init__(self, coordinator: NetboiCoordinator) -> None:
+    def __init__(self, coordinator: NetwrthCoordinator) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.entry.entry_id}_last_sync"
 
@@ -107,12 +107,12 @@ class NetboiLastSyncSensor(NetboiEntity, SensorEntity):
         return self.coordinator.data.newest_balance_at
 
 
-class NetboiAccountCountSensor(NetboiEntity, SensorEntity):
+class NetwrthAccountCountSensor(NetwrthEntity, SensorEntity):
     _attr_name = "Accounts"
     _attr_icon = "mdi:bank"
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, coordinator: NetboiCoordinator) -> None:
+    def __init__(self, coordinator: NetwrthCoordinator) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.entry.entry_id}_accounts"
 
@@ -121,7 +121,7 @@ class NetboiAccountCountSensor(NetboiEntity, SensorEntity):
         return len(self.coordinator.data.visible)
 
 
-class NetboiRealSensor(NetboiEntity, SensorEntity):
+class NetwrthRealSensor(NetwrthEntity, SensorEntity):
     """Base for real-currency sensors: unavailable while data is censored."""
 
     _attr_device_class = SensorDeviceClass.MONETARY
@@ -138,11 +138,11 @@ class NetboiRealSensor(NetboiEntity, SensorEntity):
         return super().available and not self.coordinator.data.censored_now()
 
 
-class NetboiNetWorthSensor(NetboiRealSensor):
+class NetwrthNetWorthSensor(NetwrthRealSensor):
     _attr_name = "Total"
     _attr_icon = "mdi:cash-multiple"
 
-    def __init__(self, coordinator: NetboiCoordinator) -> None:
+    def __init__(self, coordinator: NetwrthCoordinator) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.entry.entry_id}_net_worth"
 
@@ -151,8 +151,8 @@ class NetboiNetWorthSensor(NetboiRealSensor):
         return self.coordinator.data.net_worth
 
 
-class NetboiKindTotalSensor(NetboiRealSensor):
-    def __init__(self, coordinator: NetboiCoordinator, kind: str) -> None:
+class NetwrthKindTotalSensor(NetwrthRealSensor):
+    def __init__(self, coordinator: NetwrthCoordinator, kind: str) -> None:
         super().__init__(coordinator)
         self._kind = kind
         self._attr_unique_id = f"{coordinator.entry.entry_id}_total_{kind}"

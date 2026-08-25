@@ -6,16 +6,22 @@
 </p>
 
 <p align="center">
-  Your <a href="https://netboi.app">netwrth</a> dashboard in Home Assistant —
+  Your <a href="https://netwrth.app">netwrth</a> dashboard in Home Assistant —
   the app's own charts, censored by default, revealed by PIN for a window you control.
 </p>
 
-> **Note:** netwrth was previously named *netboi*. For backward compatibility the
-> Home Assistant integration domain stays `netboi` — so the
-> `custom_components/netboi/` path, entity ids (`sensor.netboi_*`), services
-> (`netboi.reveal` / `netboi.conceal`), and card element names
-> (`custom:netboi-worth-card` etc.) are unchanged. Existing installs and
-> dashboards keep working as-is.
+> **Migrating from netboi (pre-rename installs):** netwrth was previously named
+> *netboi*, and every technical identifier changed with the rename — there is no
+> backward compatibility. To migrate: delete the old integration entry and the old
+> `custom_components/netboi/` directory (or reinstall via HACS), restart HA, and
+> re-add the integration (server URL + API key). Then update your dashboards:
+> card types `custom:netboi-*-card` → `custom:netwrth-*-card`; entity ids change
+> from `sensor.netboi_*` to `sensor.netwrth_*`; automations listening for the
+> `netboi_censor_changed` event must switch to `netwrth_censor_changed`; the
+> Lovelace resource `/netboi_static/netboi-cards.js` is replaced by
+> `/netwrth_static/netwrth-cards.js` (the integration re-registers it
+> automatically on storage-mode dashboards; YAML-mode dashboards update it
+> manually).
 
 <p align="center"><img src="docs/img/worth.png" alt="netwrth worth card" width="640"></p>
 
@@ -32,7 +38,7 @@ Cards register themselves. YAML-mode dashboards add the resource manually:
 ```yaml
 lovelace:
   resources:
-    - url: /netboi_static/netboi-cards.js
+    - url: /netwrth_static/netwrth-cards.js
       type: module
 ```
 
@@ -44,16 +50,16 @@ Amounts are redacted **server-side, before they leave your netwrth deployment**,
 
 ## Cards
 
-All cards share: `entry` (which netwrth connection), `title`, `theme: netboi | ha`, `auto_conceal_minutes`. Anything with a header toggle can also be fixed by config — set the value and hide its selector.
+All cards share: `entry` (which netwrth connection), `title`, `theme: netwrth | ha`, `auto_conceal_minutes`. Anything with a header toggle can also be fixed by config — set the value and hide its selector.
 
-### Total over time — `netboi-worth-card`
+### Total over time — `netwrth-worth-card`
 
 The dashboard chart with the web app's views (day-to-day / investments / everything) and modes.
 
 <p align="center"><img src="docs/img/worth.png" alt="total mode" width="640"></p>
 
 ```yaml
-type: custom:netboi-worth-card
+type: custom:netwrth-worth-card
 view: all                  # daily | invest | all
 mode: total                # total | stacked | category | flow
 range: 6m                  # 1d 1w 1m 3m 6m 1y all
@@ -70,18 +76,18 @@ show_range_selector: false # pin the range: hide its toggle
 
 <p align="center"><img src="docs/img/category.png" alt="category mode" width="640"></p>
 
-### Net flow — `netboi-flow-card`
+### Net flow — `netwrth-flow-card`
 
 Money kept vs burned per day/week/month over the day-to-day accounts (cash + credit). Balance deltas stand in for income minus spending: green kept, red burned.
 
 <p align="center"><img src="docs/img/flow.png" alt="net flow card" width="640"></p>
 
 ```yaml
-type: custom:netboi-flow-card
+type: custom:netwrth-flow-card
 range: 3m                  # + the same selector/pinning options as above
 ```
 
-### Stat — `netboi-stat-card`
+### Stat — `netwrth-stat-card`
 
 One big number, plus the change over the window in dollars and percent. Censored, the real percent change takes the big slot instead.
 
@@ -91,21 +97,21 @@ One big number, plus the change over the window in dollars and percent. Censored
 </p>
 
 ```yaml
-type: custom:netboi-stat-card
+type: custom:netwrth-stat-card
 title: Total
 view: all
 range: 1m
 show_range_selector: false # optional: pin the range
 ```
 
-### Accounts — `netboi-accounts-card`
+### Accounts — `netwrth-accounts-card`
 
 Grouped by kind: balance, change over the selected window, and a sync-freshness dot (green fresh, amber stale). Censored, balances read as share of the total.
 
 <p align="center"><img src="docs/img/accounts.png" alt="accounts card" width="560"></p>
 
 ```yaml
-type: custom:netboi-accounts-card
+type: custom:netwrth-accounts-card
 view: all
 range: 1m                  # window for the change column
 show_range_selector: false # optional: pin the range
@@ -123,17 +129,17 @@ Censor-safe, always available: total change % (day/week/month/year), per-kind sh
 automation:
   - trigger:
       - platform: numeric_state
-        entity_id: sensor.netboi_total_change_week
+        entity_id: sensor.netwrth_total_change_week
         below: -5
     action:
       - action: notify.mobile_app_phone
         data:
-          message: "balances down {{ states('sensor.netboi_total_change_week') }}% this week"
+          message: "balances down {{ states('sensor.netwrth_total_change_week') }}% this week"
 ```
 
 ## Services
 
-`netboi.reveal` (fields: `code`, optional `ttl_minutes`, `entry_id`) and `netboi.conceal`:
+`netwrth.reveal` (fields: `code`, optional `ttl_minutes`, `entry_id`) and `netwrth.conceal`:
 
 ```yaml
 # re-censor every screen at night
@@ -142,7 +148,7 @@ automation:
       - platform: time
         at: "22:00:00"
     action:
-      - action: netboi.conceal
+      - action: netwrth.conceal
 ```
 
 ## Options
@@ -152,7 +158,7 @@ automation:
 ## Development
 
 ```sh
-cd cards && npm install && npm run build   # emits custom_components/netboi/frontend/netboi-cards.js
+cd cards && npm install && npm run build   # emits custom_components/netwrth/frontend/netwrth-cards.js
 ```
 
 Chart components under `cards/src/{components,lib}` are vendored from the netwrth web app — the rendering is code-identical. Screenshots show demo data.

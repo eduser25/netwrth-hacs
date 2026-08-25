@@ -473,26 +473,26 @@ const Qb = ["1d", "1w", "1m", "3m", "6m", "1y", "all"], uo = [
     modes: ["total", "stacked", "category"],
     defaultMode: "total"
   }
-], XR = "netboi_censor_changed";
+], XR = "netwrth_censor_changed";
 function KR(t, e) {
   return t.connection.sendMessagePromise({
-    type: "netboi/overview",
+    type: "netwrth/overview",
     ...e ? { entry_id: e } : {}
   });
 }
 function VR(t, e, n) {
   return t.connection.sendMessagePromise({
-    type: "netboi/series",
+    type: "netwrth/series",
     range: n,
     ...e ? { entry_id: e } : {}
   });
 }
 function FR(t) {
-  return t.connection.sendMessagePromise({ type: "netboi/entries" });
+  return t.connection.sendMessagePromise({ type: "netwrth/entries" });
 }
 function ZR(t, e, n, r) {
   return t.connection.sendMessagePromise({
-    type: "netboi/reveal",
+    type: "netwrth/reveal",
     code: n,
     ...r !== void 0 ? { ttl_minutes: r } : {},
     ...e ? { entry_id: e } : {}
@@ -500,7 +500,7 @@ function ZR(t, e, n, r) {
 }
 function QR(t, e) {
   return t.connection.sendMessagePromise({
-    type: "netboi/conceal",
+    type: "netwrth/conceal",
     ...e ? { entry_id: e } : {}
   });
 }
@@ -29340,7 +29340,7 @@ function oh(t) {
       if (!this._config || !this._hass || !this.isConnected) return;
       this.shadowRoot || this.attachShadow({ mode: "open" });
       const c = this.shadowRoot;
-      this._style || (this._style = document.createElement("style"), c.appendChild(this._style)), this._style.textContent = AY(this._config.theme ?? "netboi"), this._mount || (this._mount = document.createElement("div"), c.appendChild(this._mount), this._root = SY.createRoot(this._mount));
+      this._style || (this._style = document.createElement("style"), c.appendChild(this._style)), this._style.textContent = AY(this._config.theme ?? "netwrth"), this._mount || (this._mount = document.createElement("div"), c.appendChild(this._mount), this._root = SY.createRoot(this._mount));
       const s = t.component;
       this._root.render(
         /* @__PURE__ */ it.jsx(s, { hass: this._hass, config: this._config }, JSON.stringify(this._config))
@@ -29406,7 +29406,7 @@ const uh = {
     select: {
       mode: "dropdown",
       options: [
-        { value: "netboi", label: "netwrth (dark)" },
+        { value: "netwrth", label: "netwrth (dark)" },
         { value: "ha", label: "Follow Home Assistant theme" }
       ]
     }
@@ -29451,7 +29451,7 @@ const uh = {
   selector: { boolean: {} }
 };
 oh({
-  tag: "netboi-worth-card",
+  tag: "netwrth-worth-card",
   name: "netwrth worth chart",
   description: "Your total over time — the netwrth dashboard chart.",
   component: pP,
@@ -29485,7 +29485,7 @@ oh({
   size: 6
 });
 oh({
-  tag: "netboi-flow-card",
+  tag: "netwrth-flow-card",
   name: "netwrth net flow",
   description: "Money kept vs burned per day/week/month (day-to-day accounts).",
   component: pP,
@@ -29504,7 +29504,7 @@ oh({
   size: 6
 });
 oh({
-  tag: "netboi-stat-card",
+  tag: "netwrth-stat-card",
   name: "netwrth stat",
   description: "One big number with its change over a window.",
   component: u3,
@@ -29513,7 +29513,7 @@ oh({
   size: 2
 });
 oh({
-  tag: "netboi-accounts-card",
+  tag: "netwrth-accounts-card",
   name: "netwrth accounts",
   description: "Accounts grouped by kind with balances and sync freshness.",
   component: a3,
@@ -29534,4 +29534,4 @@ oh({
   stub: { view: "all", range: "1m" },
   size: 4
 });
-console.info("%c netboi cards %c loaded", "background:#60a5fa;color:#0b0f17;border-radius:3px 0 0 3px;padding:1px 4px", "background:#17202f;color:#e6edf7;border-radius:0 3px 3px 0;padding:1px 4px");
+console.info("%c netwrth cards %c loaded", "background:#60a5fa;color:#0b0f17;border-radius:3px 0 0 3px;padding:1px 4px", "background:#17202f;color:#e6edf7;border-radius:0 3px 3px 0;padding:1px 4px");

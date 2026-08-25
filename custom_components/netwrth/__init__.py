@@ -1,4 +1,4 @@
-"""netwrth: net-worth charts and sensors backed by a netwrth deployment (HA domain stays netboi)."""
+"""netwrth: net-worth charts and sensors backed by a netwrth deployment."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import NetboiClient, NetboiError, NetboiPinError
+from .api import NetwrthClient, NetwrthError, NetwrthPinError
 from .const import (
     CONF_API_KEY,
     CONF_BASE_URL,
@@ -21,7 +21,7 @@ from .const import (
     DOMAIN,
     OPT_REVEAL_TTL,
 )
-from .coordinator import NetboiCoordinator
+from .coordinator import NetwrthCoordinator
 from .frontend import async_register_frontend
 from .websocket import async_register_websocket
 
@@ -45,11 +45,11 @@ CONCEAL_SCHEMA = vol.Schema({vol.Optional("entry_id"): cv.string})
 
 
 @dataclass
-class NetboiRuntime:
+class NetwrthRuntime:
     """Per-entry state shared by platforms, websocket commands and services."""
 
-    client: NetboiClient
-    coordinator: NetboiCoordinator
+    client: NetwrthClient
+    coordinator: NetwrthCoordinator
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
@@ -60,26 +60,26 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     return True
 
 
-def _runtimes(hass: HomeAssistant, entry_id: str | None) -> list[NetboiRuntime]:
+def _runtimes(hass: HomeAssistant, entry_id: str | None) -> list[NetwrthRuntime]:
     data = hass.data.get(DOMAIN, {})
-    runtimes = [v for v in data.values() if isinstance(v, NetboiRuntime)]
+    runtimes = [v for v in data.values() if isinstance(v, NetwrthRuntime)]
     if entry_id:
-        runtimes = [data[entry_id]] if isinstance(data.get(entry_id), NetboiRuntime) else []
+        runtimes = [data[entry_id]] if isinstance(data.get(entry_id), NetwrthRuntime) else []
     if not runtimes:
         raise ServiceValidationError("no matching netwrth config entry")
     return runtimes
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    client = NetboiClient(
+    client = NetwrthClient(
         async_get_clientsession(hass),
         entry.data[CONF_BASE_URL],
         entry.data[CONF_API_KEY],
     )
-    coordinator = NetboiCoordinator(hass, entry, client)
+    coordinator = NetwrthCoordinator(hass, entry, client)
     await coordinator.async_config_entry_first_refresh()
 
-    hass.data[DOMAIN][entry.entry_id] = NetboiRuntime(client=client, coordinator=coordinator)
+    hass.data[DOMAIN][entry.entry_id] = NetwrthRuntime(client=client, coordinator=coordinator)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
 
@@ -91,9 +91,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             )
             try:
                 await rt.client.reveal(call.data["code"], ttl_minutes * 60)
-            except NetboiPinError as err:
+            except NetwrthPinError as err:
                 raise HomeAssistantError(str(err)) from err
-            except NetboiError as err:
+            except NetwrthError as err:
                 raise HomeAssistantError(f"reveal failed: {err}") from err
             await rt.coordinator.async_refresh()
 
@@ -101,7 +101,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         for rt in _runtimes(hass, call.data.get("entry_id")):
             try:
                 await rt.client.conceal()
-            except NetboiError as err:
+            except NetwrthError as err:
                 raise HomeAssistantError(f"conceal failed: {err}") from err
             await rt.coordinator.async_refresh()
 

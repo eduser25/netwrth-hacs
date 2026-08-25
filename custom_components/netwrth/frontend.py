@@ -20,7 +20,7 @@ def _version(hass: HomeAssistant) -> str:
 
 
 async def async_register_frontend(hass: HomeAssistant) -> None:
-    bundle = Path(__file__).parent / "frontend" / "netboi-cards.js"
+    bundle = Path(__file__).parent / "frontend" / "netwrth-cards.js"
     await hass.http.async_register_static_paths(
         [StaticPathConfig(CARDS_URL, str(bundle), cache_headers=False)]
     )
@@ -43,7 +43,7 @@ async def async_register_frontend(hass: HomeAssistant) -> None:
                     await resources.async_update_item(item["id"], {"url": url})
                 return
         await resources.async_create_item({"res_type": "module", "url": url})
-        _LOGGER.info("Registered netboi cards resource at %s", url)
+        _LOGGER.info("Registered netwrth cards resource at %s", url)
     except Exception:  # noqa: BLE001 - storage layout varies across HA versions
         _LOGGER.warning(
             "Could not auto-register the Lovelace resource; add %s as a module resource manually",

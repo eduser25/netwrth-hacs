@@ -8,7 +8,7 @@ import {
   BaseCardConfig,
   LockControl,
   Segmented,
-  useNetboi,
+  useNetwrth,
   useVisibleAccounts,
 } from "./common";
 
@@ -39,7 +39,7 @@ export default function WorthCard({
   const [mode, setMode] = useState<ChartMode>(
     config.mode && view.modes.includes(config.mode) ? config.mode : view.defaultMode
   );
-  const { overview, series, masked, error, refresh } = useNetboi(hass, config.entry, range);
+  const { overview, series, masked, error, refresh } = useNetwrth(hass, config.entry, range);
   const visible = useVisibleAccounts(overview);
   const accounts = useMemo(() => visible.filter(view.pick), [visible, view]);
 

@@ -23,7 +23,7 @@
 <body>
   <div class="row" id="cards"></div>
   <script type="module">
-    import "../../custom_components/netboi/frontend/netboi-cards.js";
+    import "../../custom_components/netwrth/frontend/netwrth-cards.js";
 
     // ---- seeded demo data -------------------------------------------------
     // Mulberry32: deterministic so screenshots are reproducible.
@@ -91,7 +91,7 @@
     const hass = {
       connection: {
         async sendMessagePromise(msg) {
-          if (msg.type === "netboi/overview") {
+          if (msg.type === "netwrth/overview") {
             return {
               entry_id: "demo",
               me: {
@@ -106,7 +106,7 @@
               default_reveal_ttl_minutes: 15,
             };
           }
-          if (msg.type === "netboi/series") {
+          if (msg.type === "netwrth/series") {
             const cut = END - (RANGE_DAYS[msg.range] ?? DAYS) * DAY;
             return {
               censored,
@@ -121,13 +121,13 @@
               })),
             };
           }
-          if (msg.type === "netboi/reveal") {
+          if (msg.type === "netwrth/reveal") {
             if (msg.code !== "1234") return { ok: false, error: "wrong code" };
             censored = false;
             return { ok: true };
           }
-          if (msg.type === "netboi/conceal") { censored = true; return { ok: true }; }
-          if (msg.type === "netboi/entries") return [{ entry_id: "demo", title: "demo", scope: "read_full" }];
+          if (msg.type === "netwrth/conceal") { censored = true; return { ok: true }; }
+          if (msg.type === "netwrth/entries") return [{ entry_id: "demo", title: "demo", scope: "read_full" }];
           throw new Error("unknown: " + msg.type);
         },
         async subscribeEvents() { return async () => {}; },
@@ -137,9 +137,9 @@
     // ---- cards ------------------------------------------------------------
     // Default gallery; override with window.CARDS before load or use setCards().
     const DEFAULT_CARDS = [
-      ["netboi-worth-card", { type: "", title: "Total", view: "all", mode: "total", range: "6m" }, 640],
-      ["netboi-accounts-card", { type: "", view: "all" }, 560],
-      ["netboi-stat-card", { type: "", title: "Total", view: "all", range: "1m" }, 340],
+      ["netwrth-worth-card", { type: "", title: "Total", view: "all", mode: "total", range: "6m" }, 640],
+      ["netwrth-accounts-card", { type: "", view: "all" }, 560],
+      ["netwrth-stat-card", { type: "", title: "Total", view: "all", range: "1m" }, 340],
     ];
 
     window.setCards = (defs) => {

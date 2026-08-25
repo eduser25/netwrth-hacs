@@ -10,7 +10,7 @@ const themeField = {
     select: {
       mode: "dropdown",
       options: [
-        { value: "netboi", label: "netwrth (dark)" },
+        { value: "netwrth", label: "netwrth (dark)" },
         { value: "ha", label: "Follow Home Assistant theme" },
       ],
     },
@@ -65,7 +65,7 @@ const compactField = {
 };
 
 defineCard({
-  tag: "netboi-worth-card",
+  tag: "netwrth-worth-card",
   name: "netwrth worth chart",
   description: "Your total over time — the netwrth dashboard chart.",
   component: WorthCard,
@@ -100,7 +100,7 @@ defineCard({
 });
 
 defineCard({
-  tag: "netboi-flow-card",
+  tag: "netwrth-flow-card",
   name: "netwrth net flow",
   description: "Money kept vs burned per day/week/month (day-to-day accounts).",
   component: WorthCard,
@@ -120,7 +120,7 @@ defineCard({
 });
 
 defineCard({
-  tag: "netboi-stat-card",
+  tag: "netwrth-stat-card",
   name: "netwrth stat",
   description: "One big number with its change over a window.",
   component: StatCard,
@@ -130,7 +130,7 @@ defineCard({
 });
 
 defineCard({
-  tag: "netboi-accounts-card",
+  tag: "netwrth-accounts-card",
   name: "netwrth accounts",
   description: "Accounts grouped by kind with balances and sync freshness.",
   component: AccountsCard,
@@ -153,4 +153,4 @@ defineCard({
 });
 
 // eslint-disable-next-line no-console
-console.info("%c netboi cards %c loaded", "background:#60a5fa;color:#0b0f17;border-radius:3px 0 0 3px;padding:1px 4px", "background:#17202f;color:#e6edf7;border-radius:0 3px 3px 0;padding:1px 4px");
+console.info("%c netwrth cards %c loaded", "background:#60a5fa;color:#0b0f17;border-radius:3px 0 0 3px;padding:1px 4px", "background:#17202f;color:#e6edf7;border-radius:0 3px 3px 0;padding:1px 4px");

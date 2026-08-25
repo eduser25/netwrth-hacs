@@ -25,10 +25,10 @@ reveal:
           mode: box
     entry_id:
       name: Config entry
-      description: "Target a specific netboi entry (default: all)."
+      description: "Target a specific netwrth entry (default: all)."
       selector:
         config_entry:
-          integration: netboi
+          integration: netwrth
 
 conceal:
   name: Conceal amounts
@@ -36,7 +36,7 @@ conceal:
   fields:
     entry_id:
       name: Config entry
-      description: "Target a specific netboi entry (default: all)."
+      description: "Target a specific netwrth entry (default: all)."
       selector:
         config_entry:
-          integration: netboi
+          integration: netwrth

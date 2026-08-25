@@ -1,4 +1,4 @@
-"""Websocket commands the netboi Lovelace cards call.
+"""Websocket commands the netwrth Lovelace cards call.
 
 Chart data flows through here (never through recorded entities), so real
 amounts revealed via PIN don't end up in HA's state history.
@@ -15,7 +15,7 @@ from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.util import dt as dt_util
 
-from .api import NetboiError, NetboiPinError
+from .api import NetwrthError, NetwrthPinError
 from .const import (
     DEFAULT_REVEAL_TTL_MINUTES,
     DOMAIN,
@@ -55,10 +55,10 @@ def async_register_websocket(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_conceal)
 
 
-@websocket_api.websocket_command({vol.Required("type"): "netboi/entries"})
+@websocket_api.websocket_command({vol.Required("type"): "netwrth/entries"})
 @callback
 def ws_entries(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Configured netboi entries, for card editors and entry resolution."""
+    """Configured netwrth entries, for card editors and entry resolution."""
     out = []
     for entry_id, rt in hass.data.get(DOMAIN, {}).items():
         if not hasattr(rt, "coordinator"):
@@ -76,7 +76,7 @@ def ws_entries(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
 
 @websocket_api.websocket_command(
     {
-        vol.Required("type"): "netboi/overview",
+        vol.Required("type"): "netwrth/overview",
         vol.Optional("entry_id"): str,
     }
 )
@@ -85,7 +85,7 @@ def ws_overview(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
     """Everything a card needs except series: key state + accounts."""
     rt = _runtime(hass, msg.get("entry_id"))
     if rt is None or rt.coordinator.data is None:
-        connection.send_error(msg["id"], "not_found", "no netboi entry available")
+        connection.send_error(msg["id"], "not_found", "no netwrth entry available")
         return
     data = rt.coordinator.data
     me = dict(data.me)
@@ -112,7 +112,7 @@ def ws_overview(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
 
 @websocket_api.websocket_command(
     {
-        vol.Required("type"): "netboi/series",
+        vol.Required("type"): "netwrth/series",
         vol.Optional("entry_id"): str,
         vol.Optional("range", default="all"): vol.In(RANGES),
     }
@@ -121,7 +121,7 @@ def ws_overview(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
 async def ws_series(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
     rt = _runtime(hass, msg.get("entry_id"))
     if rt is None:
-        connection.send_error(msg["id"], "not_found", "no netboi entry available")
+        connection.send_error(msg["id"], "not_found", "no netwrth entry available")
         return
     entry_id = rt.coordinator.entry.entry_id
     key = (entry_id, msg["range"])
@@ -131,8 +131,8 @@ async def ws_series(hass: HomeAssistant, connection, msg: dict[str, Any]) -> Non
         return
     try:
         out = await rt.client.series(msg["range"])
-    except NetboiError as err:
-        connection.send_error(msg["id"], "netboi_error", str(err))
+    except NetwrthError as err:
+        connection.send_error(msg["id"], "netwrth_error", str(err))
         return
     data = rt.coordinator.data
     # Prefer the flag the backend stamped into this very response; older
@@ -153,7 +153,7 @@ async def ws_series(hass: HomeAssistant, connection, msg: dict[str, Any]) -> Non
 
 @websocket_api.websocket_command(
     {
-        vol.Required("type"): "netboi/reveal",
+        vol.Required("type"): "netwrth/reveal",
         vol.Optional("entry_id"): str,
         vol.Required("code"): str,
         vol.Optional("ttl_minutes"): vol.All(vol.Coerce(int), vol.Range(min=0, max=43200)),
@@ -163,7 +163,7 @@ async def ws_series(hass: HomeAssistant, connection, msg: dict[str, Any]) -> Non
 async def ws_reveal(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
     rt = _runtime(hass, msg.get("entry_id"))
     if rt is None:
-        connection.send_error(msg["id"], "not_found", "no netboi entry available")
+        connection.send_error(msg["id"], "not_found", "no netwrth entry available")
         return
     ttl_minutes = msg.get(
         "ttl_minutes",
@@ -171,12 +171,12 @@ async def ws_reveal(hass: HomeAssistant, connection, msg: dict[str, Any]) -> Non
     )
     try:
         out = await rt.client.reveal(msg["code"], ttl_minutes * 60)
-    except NetboiPinError as err:
+    except NetwrthPinError as err:
         # Wrong PIN / backoff / censored-only scope: a result, not a fault.
         connection.send_result(msg["id"], {"ok": False, "error": str(err), "status": err.status})
         return
-    except NetboiError as err:
-        connection.send_error(msg["id"], "netboi_error", str(err))
+    except NetwrthError as err:
+        connection.send_error(msg["id"], "netwrth_error", str(err))
         return
     # The coordinator refresh detects the censor flip and fires
     # EVENT_CENSOR_CHANGED once fresh data is in place, so subscribed cards
@@ -191,7 +191,7 @@ async def ws_reveal(hass: HomeAssistant, connection, msg: dict[str, Any]) -> Non
 
 @websocket_api.websocket_command(
     {
-        vol.Required("type"): "netboi/conceal",
+        vol.Required("type"): "netwrth/conceal",
         vol.Optional("entry_id"): str,
     }
 )
@@ -199,12 +199,12 @@ async def ws_reveal(hass: HomeAssistant, connection, msg: dict[str, Any]) -> Non
 async def ws_conceal(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
     rt = _runtime(hass, msg.get("entry_id"))
     if rt is None:
-        connection.send_error(msg["id"], "not_found", "no netboi entry available")
+        connection.send_error(msg["id"], "not_found", "no netwrth entry available")
         return
     try:
         out = await rt.client.conceal()
-    except NetboiError as err:
-        connection.send_error(msg["id"], "netboi_error", str(err))
+    except NetwrthError as err:
+        connection.send_error(msg["id"], "netwrth_error", str(err))
         return
     _invalidate_cache(rt.coordinator.entry.entry_id)
     # async_refresh bypasses the coordinator's request debouncer (10s

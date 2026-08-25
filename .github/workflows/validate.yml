@@ -40,4 +40,4 @@ jobs:
       - run: npm run build
         working-directory: cards
       # The committed bundle must match the source it claims to be built from.
-      - run: git diff --exit-code custom_components/netboi/frontend/netboi-cards.js
+      - run: git diff --exit-code custom_components/netwrth/frontend/netwrth-cards.js

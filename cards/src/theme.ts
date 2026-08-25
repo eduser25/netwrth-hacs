@@ -1,10 +1,10 @@
 // Card chrome styles injected into each card's shadow root. Two token sets:
-// "netboi" carries the app's own dark identity; "ha" maps the tokens onto the
+// "netwrth" carries the app's own dark identity; "ha" maps the tokens onto the
 // active Home Assistant theme instead. (Chart series colors stay on the
-// netboi palette either way for now.)
-export type ThemeMode = "netboi" | "ha";
+// netwrth palette either way for now.)
+export type ThemeMode = "netwrth" | "ha";
 
-const NETBOI_TOKENS = `
+const NETWRTH_TOKENS = `
   --nb-bg: #121a27;
   --nb-panel-2: #17202f;
   --nb-border: #223047;
@@ -33,7 +33,7 @@ export function cardCss(mode: ThemeMode): string {
   :host { display: block; }
   * { box-sizing: border-box; }
   .card {
-    ${mode === "ha" ? HA_TOKENS : NETBOI_TOKENS}
+    ${mode === "ha" ? HA_TOKENS : NETWRTH_TOKENS}
     position: relative;
     background: var(--nb-bg);
     border: 1px solid var(--nb-border);

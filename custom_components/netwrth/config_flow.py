@@ -1,4 +1,4 @@
-"""Config flow: point the integration at a netboi deployment with an API key."""
+"""Config flow: point the integration at a netwrth deployment with an API key."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from homeassistant.config_entries import (
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import NetboiAuthError, NetboiClient, NetboiError
+from .api import NetwrthAuthError, NetwrthClient, NetwrthError
 from .const import (
     CONF_API_KEY,
     CONF_BASE_URL,
@@ -37,7 +37,7 @@ USER_SCHEMA = vol.Schema(
 )
 
 
-class NetboiConfigFlow(ConfigFlow, domain=DOMAIN):
+class NetwrthConfigFlow(ConfigFlow, domain=DOMAIN):
     """UI setup: base URL + API key, validated against /api/me."""
 
     VERSION = 1
@@ -51,12 +51,12 @@ class NetboiConfigFlow(ConfigFlow, domain=DOMAIN):
             api_key = user_input[CONF_API_KEY].strip()
             if not base_url.startswith(("http://", "https://")):
                 base_url = f"https://{base_url}"
-            client = NetboiClient(async_get_clientsession(self.hass), base_url, api_key)
+            client = NetwrthClient(async_get_clientsession(self.hass), base_url, api_key)
             try:
                 me = await client.me()
-            except NetboiAuthError:
+            except NetwrthAuthError:
                 errors["base"] = "invalid_auth"
-            except NetboiError:
+            except NetwrthError:
                 errors["base"] = "cannot_connect"
             else:
                 # One entry per key: the hash keeps the token out of HA's
@@ -75,11 +75,11 @@ class NetboiConfigFlow(ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> "NetboiOptionsFlow":
-        return NetboiOptionsFlow()
+    def async_get_options_flow(config_entry: ConfigEntry) -> "NetwrthOptionsFlow":
+        return NetwrthOptionsFlow()
 
 
-class NetboiOptionsFlow(OptionsFlow):
+class NetwrthOptionsFlow(OptionsFlow):
     """Polling cadence, default auto-conceal window, real-$ sensor opt-in."""
 
     async def async_step_init(

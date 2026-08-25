@@ -17,7 +17,7 @@ export type CensorChangedEvent = {
 
 // Fired by the integration whenever the key's censor state flips (a reveal
 // from any card or device, a conceal, a service call, or window expiry).
-export const EVENT_CENSOR_CHANGED = "netboi_censor_changed";
+export const EVENT_CENSOR_CHANGED = "netwrth_censor_changed";
 
 export type Me = {
   label: string;
@@ -41,7 +41,7 @@ export type EntryInfo = { entry_id: string; title: string; scope: string | null 
 
 export function fetchOverview(hass: Hass, entry?: string): Promise<Overview> {
   return hass.connection.sendMessagePromise<Overview>({
-    type: "netboi/overview",
+    type: "netwrth/overview",
     ...(entry ? { entry_id: entry } : {}),
   });
 }
@@ -52,14 +52,14 @@ export function fetchSeries(
   range: RangeKey
 ): Promise<{ series: AccountSeries[]; censored: boolean }> {
   return hass.connection.sendMessagePromise({
-    type: "netboi/series",
+    type: "netwrth/series",
     range,
     ...(entry ? { entry_id: entry } : {}),
   });
 }
 
 export function listEntries(hass: Hass): Promise<EntryInfo[]> {
-  return hass.connection.sendMessagePromise({ type: "netboi/entries" });
+  return hass.connection.sendMessagePromise({ type: "netwrth/entries" });
 }
 
 export function reveal(
@@ -69,7 +69,7 @@ export function reveal(
   ttlMinutes?: number
 ): Promise<{ ok: boolean; error?: string }> {
   return hass.connection.sendMessagePromise({
-    type: "netboi/reveal",
+    type: "netwrth/reveal",
     code,
     ...(ttlMinutes !== undefined ? { ttl_minutes: ttlMinutes } : {}),
     ...(entry ? { entry_id: entry } : {}),
@@ -78,7 +78,7 @@ export function reveal(
 
 export function conceal(hass: Hass, entry?: string): Promise<{ ok: boolean }> {
   return hass.connection.sendMessagePromise({
-    type: "netboi/conceal",
+    type: "netwrth/conceal",
     ...(entry ? { entry_id: entry } : {}),
   });
 }

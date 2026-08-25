@@ -1,4 +1,4 @@
-"""Async client for the netboi API, authenticated with a scoped API key."""
+"""Async client for the netwrth API, authenticated with a scoped API key."""
 
 from __future__ import annotations
 
@@ -7,15 +7,15 @@ from typing import Any
 import aiohttp
 
 
-class NetboiError(Exception):
-    """Any netboi API failure."""
+class NetwrthError(Exception):
+    """Any netwrth API failure."""
 
 
-class NetboiAuthError(NetboiError):
+class NetwrthAuthError(NetwrthError):
     """The API key was rejected."""
 
 
-class NetboiPinError(NetboiError):
+class NetwrthPinError(NetwrthError):
     """A reveal attempt was rejected (wrong PIN, backoff, or scope)."""
 
     def __init__(self, status: int, message: str) -> None:
@@ -23,8 +23,8 @@ class NetboiPinError(NetboiError):
         self.status = status
 
 
-class NetboiClient:
-    """Thin wrapper over netboi's key-authenticated read API."""
+class NetwrthClient:
+    """Thin wrapper over netwrth's key-authenticated read API."""
 
     def __init__(self, session: aiohttp.ClientSession, base_url: str, api_key: str) -> None:
         self._session = session
@@ -41,17 +41,17 @@ class NetboiClient:
                 timeout=aiohttp.ClientTimeout(total=30),
             )
         except (aiohttp.ClientError, TimeoutError) as err:
-            raise NetboiError(f"cannot reach netboi at {self._base}: {err}") from err
+            raise NetwrthError(f"cannot reach netwrth at {self._base}: {err}") from err
         async with resp:
             if resp.status == 401:
-                raise NetboiAuthError("netboi rejected the API key")
+                raise NetwrthAuthError("netwrth rejected the API key")
             body = await resp.json(content_type=None)
             if resp.status >= 400:
                 msg = body.get("error", f"HTTP {resp.status}") if isinstance(body, dict) else f"HTTP {resp.status}"
                 # 403/429 on reveal are user-facing PIN outcomes, not faults.
                 if resp.status in (403, 429):
-                    raise NetboiPinError(resp.status, msg)
-                raise NetboiError(msg)
+                    raise NetwrthPinError(resp.status, msg)
+                raise NetwrthError(msg)
             return body
 
     async def me(self) -> dict[str, Any]:

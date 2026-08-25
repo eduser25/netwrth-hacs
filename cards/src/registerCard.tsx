@@ -20,7 +20,7 @@ export type CardDef = {
 // Wraps a React card component as a Lovelace custom element: shadow DOM for
 // style isolation, themed CSS injected per config, one React root per card.
 export function defineCard(def: CardDef): void {
-  class NetboiCard extends HTMLElement {
+  class NetwrthCard extends HTMLElement {
     private _root?: Root;
     private _mount?: HTMLDivElement;
     private _style?: HTMLStyleElement;
@@ -76,7 +76,7 @@ export function defineCard(def: CardDef): void {
         this._style = document.createElement("style");
         shadow.appendChild(this._style);
       }
-      this._style.textContent = cardCss((this._config.theme as ThemeMode) ?? "netboi");
+      this._style.textContent = cardCss((this._config.theme as ThemeMode) ?? "netwrth");
       if (!this._mount) {
         this._mount = document.createElement("div");
         shadow.appendChild(this._mount);
@@ -90,7 +90,7 @@ export function defineCard(def: CardDef): void {
     }
   }
 
-  class NetboiCardEditor extends HTMLElement {
+  class NetwrthCardEditor extends HTMLElement {
     private _hass?: Hass;
     private _config?: Record<string, unknown>;
     private _entries?: { value: string; label: string }[];
@@ -153,8 +153,8 @@ export function defineCard(def: CardDef): void {
     }
   }
 
-  customElements.define(def.tag, NetboiCard);
-  customElements.define(`${def.tag}-editor`, NetboiCardEditor);
+  customElements.define(def.tag, NetwrthCard);
+  customElements.define(`${def.tag}-editor`, NetwrthCardEditor);
 
   const w = window as any;
   w.customCards = w.customCards || [];

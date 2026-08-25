@@ -17,7 +17,7 @@ export type BaseCardConfig = {
   type: string;
   entry?: string;
   title?: string;
-  theme?: "netboi" | "ha";
+  theme?: "netwrth" | "ha";
   auto_conceal_minutes?: number;
 };
 
@@ -31,7 +31,7 @@ const REFRESH_MS = 60_000;
 // a local deadline drops revealed data the moment the window lapses, and a
 // visibility hook refetches when a sleeping screen wakes up instead of
 // waiting out a throttled interval.
-export function useNetboi(hass: Hass, entry: string | undefined, range: RangeKey) {
+export function useNetwrth(hass: Hass, entry: string | undefined, range: RangeKey) {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [series, setSeries] = useState<AccountSeries[] | null>(null);
   const [masked, setMasked] = useState(true);

@@ -8,7 +8,7 @@ import {
   BaseCardConfig,
   LockControl,
   Segmented,
-  useNetboi,
+  useNetwrth,
   useVisibleAccounts,
 } from "./common";
 
@@ -30,7 +30,7 @@ export default function StatCard({
 }) {
   const view = VIEWS.find((v) => v.key === (config.view ?? "all")) ?? VIEWS[2];
   const [range, setRange] = useState<RangeKey>(config.range ?? "1m");
-  const { overview, series, masked, error, refresh } = useNetboi(hass, config.entry, range);
+  const { overview, series, masked, error, refresh } = useNetwrth(hass, config.entry, range);
   const visible = useVisibleAccounts(overview);
   const accounts = useMemo(() => visible.filter(view.pick), [visible, view]);
 

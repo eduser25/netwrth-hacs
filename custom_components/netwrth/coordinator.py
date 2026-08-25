@@ -1,4 +1,4 @@
-"""Polling coordinator: one netboi snapshot shared by sensors and cards."""
+"""Polling coordinator: one netwrth snapshot shared by sensors and cards."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
-from .api import NetboiAuthError, NetboiClient, NetboiError
+from .api import NetwrthAuthError, NetwrthClient, NetwrthError
 from .const import (
     DEFAULT_SCAN_INTERVAL_MINUTES,
     DOMAIN,
@@ -30,8 +30,8 @@ KINDS = ("cash", "investment", "credit", "loan", "other")
 
 
 @dataclass
-class NetboiData:
-    """One coordinated snapshot of a netboi deployment."""
+class NetwrthData:
+    """One coordinated snapshot of a netwrth deployment."""
 
     me: dict[str, Any]
     accounts: list[dict[str, Any]]
@@ -132,10 +132,10 @@ def _changes(rows: list[tuple[datetime, float]]) -> dict[str, float | None]:
     return out
 
 
-class NetboiCoordinator(DataUpdateCoordinator[NetboiData]):
+class NetwrthCoordinator(DataUpdateCoordinator[NetwrthData]):
     """Fetches /api/me, /api/accounts and a 1y series each cycle."""
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, client: NetboiClient) -> None:
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, client: NetwrthClient) -> None:
         minutes = entry.options.get(OPT_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_MINUTES)
         super().__init__(
             hass,
@@ -148,17 +148,17 @@ class NetboiCoordinator(DataUpdateCoordinator[NetboiData]):
         self.client = client
         self._expiry_cancel = None
 
-    async def _async_update_data(self) -> NetboiData:
+    async def _async_update_data(self) -> NetwrthData:
         try:
             me = await self.client.me()
             accounts = await self.client.accounts()
             series = (await self.client.series("1y")).get("series", [])
-        except NetboiAuthError as err:
+        except NetwrthAuthError as err:
             raise UpdateFailed(f"API key rejected: {err}") from err
-        except NetboiError as err:
+        except NetwrthError as err:
             raise UpdateFailed(str(err)) from err
 
-        data = NetboiData(me=me, accounts=accounts)
+        data = NetwrthData(me=me, accounts=accounts)
         data.visible = [a for a in accounts if not a.get("hidden")]
 
         total = 0.0
@@ -200,7 +200,7 @@ class NetboiCoordinator(DataUpdateCoordinator[NetboiData]):
             )
         return data
 
-    def _schedule_expiry_refresh(self, data: NetboiData) -> None:
+    def _schedule_expiry_refresh(self, data: NetwrthData) -> None:
         """Re-poll right after the reveal window lapses, so entities flip back
 
         to censored on time instead of at the next scheduled cycle.
