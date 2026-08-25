@@ -10,19 +10,6 @@
   the app's own charts, censored by default, revealed by PIN for a window you control.
 </p>
 
-> **Migrating from netboi (pre-rename installs):** netwrth was previously named
-> *netboi*, and every technical identifier changed with the rename — there is no
-> backward compatibility. To migrate: delete the old integration entry and the old
-> `custom_components/netboi/` directory (or reinstall via HACS), restart HA, and
-> re-add the integration (server URL + API key). Then update your dashboards:
-> card types `custom:netboi-*-card` → `custom:netwrth-*-card`; entity ids change
-> from `sensor.netboi_*` to `sensor.netwrth_*`; automations listening for the
-> `netboi_censor_changed` event must switch to `netwrth_censor_changed`; the
-> Lovelace resource `/netboi_static/netboi-cards.js` is replaced by
-> `/netwrth_static/netwrth-cards.js` (the integration re-registers it
-> automatically on storage-mode dashboards; YAML-mode dashboards update it
-> manually).
-
 <p align="center"><img src="docs/img/worth.png" alt="netwrth worth card" width="640"></p>
 
 ## Install

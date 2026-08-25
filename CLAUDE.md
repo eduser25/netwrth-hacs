@@ -1,8 +1,7 @@
 # netwrth-hacs
 
 Home Assistant integration (`custom_components/netwrth/`) + React/Recharts Lovelace cards
-(`cards/`) for the netwrth net-worth tracker (formerly netboi — fully renamed, domain
-included; see the README migration note). Amounts are censored server-side; the cards
+(`cards/`) for the netwrth net-worth tracker. Amounts are censored server-side; the cards
 render either real dollars or rescaled percent-of-total values.
 
 ## Build
