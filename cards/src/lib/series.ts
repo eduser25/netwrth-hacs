@@ -61,6 +61,22 @@ export function sumRow(
   return total;
 }
 
+// Calendar bucketing shared by the delta-shaped charts: day buckets for
+// short ranges, weeks for months, months for everything longer.
+function bucketKeyOf(range: RangeKey): (ts: number) => number {
+  const bucket =
+    range === "1d" || range === "1w" ? "day" : range === "1m" || range === "3m" ? "week" : "month";
+  return (ts: number) => {
+    const d = new Date(ts);
+    if (bucket === "day") return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    if (bucket === "week") {
+      const monday = (d.getDay() + 6) % 7;
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate() - monday).getTime();
+    }
+    return new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+  };
+}
+
 // Net flow per calendar bucket for a group of accounts: the change in the
 // group's total balance within each day/week/month (granularity follows the
 // selected range). Positive = money kept, negative = burn. This is the flow
@@ -71,17 +87,7 @@ export function flowSeries(
   range: RangeKey
 ): { ts: number; flow: number }[] {
   if (rows.length === 0) return [];
-  const bucket =
-    range === "1d" || range === "1w" ? "day" : range === "1m" || range === "3m" ? "week" : "month";
-  const keyOf = (ts: number) => {
-    const d = new Date(ts);
-    if (bucket === "day") return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-    if (bucket === "week") {
-      const monday = (d.getDay() + 6) % 7;
-      return new Date(d.getFullYear(), d.getMonth(), d.getDate() - monday).getTime();
-    }
-    return new Date(d.getFullYear(), d.getMonth(), 1).getTime();
-  };
+  const keyOf = bucketKeyOf(range);
   // Last known group total within each bucket.
   const endTotals = new Map<number, number>();
   for (const r of rows) endTotals.set(keyOf(r.ts), sumRow(r, accounts));
@@ -92,6 +98,35 @@ export function flowSeries(
     const flow = end - prev;
     prev = end;
     return { ts: k, flow };
+  });
+}
+
+// Per-account balance change within each calendar bucket (same bucketing as
+// flowSeries): not how much each account holds, but who moved the total.
+// Feeds the stacked mode's sign-stacked bars; net is the bucket's sum.
+export function deltaSeries(
+  rows: Row[],
+  accounts: Account[],
+  range: RangeKey
+): { ts: number; deltas: Record<number, number>; net: number }[] {
+  if (rows.length === 0) return [];
+  const keyOf = bucketKeyOf(range);
+  // Last known row within each bucket carries every account's end balance.
+  const endRows = new Map<number, Row>();
+  for (const r of rows) endRows.set(keyOf(r.ts), r);
+  const keys = [...endRows.keys()].sort((a, b) => a - b);
+  let prev = rows[0];
+  return keys.map((k) => {
+    const end = endRows.get(k)!;
+    const deltas: Record<number, number> = {};
+    let net = 0;
+    for (const a of accounts) {
+      const d = (end.values[a.id] ?? 0) - (prev.values[a.id] ?? 0);
+      deltas[a.id] = d;
+      net += d;
+    }
+    prev = end;
+    return { ts: k, deltas, net };
   });
 }
 

@@ -1,4 +1,13 @@
-import { Account, AccountSeries, RangeKey } from "./types";
+import {
+  Account,
+  AccountSeries,
+  RangeKey,
+  RecurringStream,
+  SpendingSummary,
+  SpendingTxn,
+  StreamActual,
+  StreamProjection,
+} from "./types";
 
 // The slice of the hass object the cards rely on.
 export type Hass = {
@@ -54,6 +63,56 @@ export function fetchSeries(
   return hass.connection.sendMessagePromise({
     type: "netwrth/series",
     range,
+    ...(entry ? { entry_id: entry } : {}),
+  });
+}
+
+// ---- Spending (per-user feature: the integration answers the distinct
+// error code "not_enabled" when the key's netwrth account lacks it) ----
+
+export type SpendingRecurring = {
+  censored: boolean;
+  month: string;
+  today: string; // YYYY-MM-DD for the live month; "" for history
+  streams: RecurringStream[];
+  expected: StreamProjection[];
+  actuals: StreamActual[];
+};
+
+export function fetchSpendingSummary(
+  hass: Hass,
+  entry: string | undefined,
+  month?: string
+): Promise<SpendingSummary> {
+  return hass.connection.sendMessagePromise({
+    type: "netwrth/spending_summary",
+    ...(month ? { month } : {}),
+    ...(entry ? { entry_id: entry } : {}),
+  });
+}
+
+export function fetchSpendingRecurring(
+  hass: Hass,
+  entry: string | undefined,
+  month?: string
+): Promise<SpendingRecurring> {
+  return hass.connection.sendMessagePromise({
+    type: "netwrth/spending_recurring",
+    ...(month ? { month } : {}),
+    ...(entry ? { entry_id: entry } : {}),
+  });
+}
+
+export function fetchSpendingTransactions(
+  hass: Hass,
+  entry: string | undefined,
+  month?: string,
+  theme?: string
+): Promise<{ month: string; censored: boolean; transactions: SpendingTxn[] }> {
+  return hass.connection.sendMessagePromise({
+    type: "netwrth/spending_transactions",
+    ...(month ? { month } : {}),
+    ...(theme ? { theme } : {}),
     ...(entry ? { entry_id: entry } : {}),
   });
 }

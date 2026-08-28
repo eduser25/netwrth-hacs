@@ -10,6 +10,10 @@ import aiohttp
 class NetwrthError(Exception):
     """Any netwrth API failure."""
 
+    def __init__(self, message: str, status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status
+
 
 class NetwrthAuthError(NetwrthError):
     """The API key was rejected."""
@@ -51,7 +55,7 @@ class NetwrthClient:
                 # 403/429 on reveal are user-facing PIN outcomes, not faults.
                 if resp.status in (403, 429):
                     raise NetwrthPinError(resp.status, msg)
-                raise NetwrthError(msg)
+                raise NetwrthError(msg, status=resp.status)
             return body
 
     async def me(self) -> dict[str, Any]:
@@ -68,6 +72,32 @@ class NetwrthClient:
         is atomic (a separately-fetched flag can be from another instant).
         """
         return await self._request("GET", f"/api/series?range={range_key}")
+
+    # Spending endpoints (per-user feature; the backend answers 404 with the
+    # feature off, surfaced as NetwrthError(status=404)). All amounts arrive
+    # already censor-scaled per the key's scope, like balances.
+
+    async def spending_summary(self, month: str | None = None) -> dict[str, Any]:
+        """Month rollup: theme totals plus total spend/income."""
+        q = f"?month={month}" if month else ""
+        return await self._request("GET", f"/api/spending/summary{q}")
+
+    async def spending_recurring(self, month: str | None = None) -> dict[str, Any]:
+        """Recurring streams + the month's actuals and (live month) projections."""
+        q = f"?month={month}" if month else ""
+        return await self._request("GET", f"/api/spending/recurring{q}")
+
+    async def spending_transactions(
+        self, month: str | None = None, theme: str | None = None
+    ) -> dict[str, Any]:
+        """The month's transactions, optionally filtered to one theme."""
+        params = []
+        if month:
+            params.append(f"month={month}")
+        if theme:
+            params.append(f"theme={theme}")
+        q = "?" + "&".join(params) if params else ""
+        return await self._request("GET", f"/api/spending/transactions{q}")
 
     async def reveal(self, code: str, ttl_seconds: int = 0) -> dict[str, Any]:
         payload: dict[str, Any] = {"code": code}

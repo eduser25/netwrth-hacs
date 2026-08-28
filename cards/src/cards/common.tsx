@@ -23,17 +23,25 @@ export type BaseCardConfig = {
 
 const REFRESH_MS = 60_000;
 
-// Shared load/refresh cycle: overview (key state + accounts) plus the series
-// for the active range, re-pulled every minute and after reveal/conceal.
+// Shared load/refresh cycle: overview (key state + accounts) plus whatever
+// payload the card's fetcher pulls, re-pulled every minute and after
+// reveal/conceal.
 //
 // The server is the authority on the reveal window (it re-censors lazily per
 // request); the two effects below only make the *display* converge promptly:
 // a local deadline drops revealed data the moment the window lapses, and a
 // visibility hook refetches when a sleeping screen wakes up instead of
 // waiting out a throttled interval.
-export function useNetwrth(hass: Hass, entry: string | undefined, range: RangeKey) {
+//
+// fetchData must be referentially stable across renders (useCallback), or
+// the card refetches on every render.
+export function useNetwrthCore<T>(
+  hass: Hass,
+  entry: string | undefined,
+  fetchData: (hass: Hass, entry: string | undefined) => Promise<{ data: T; censored: boolean }>
+) {
   const [overview, setOverview] = useState<Overview | null>(null);
-  const [series, setSeries] = useState<AccountSeries[] | null>(null);
+  const [data, setData] = useState<T | null>(null);
   const [masked, setMasked] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
@@ -43,7 +51,7 @@ export function useNetwrth(hass: Hass, entry: string | undefined, range: RangeKe
   // Drop stale revealed data and refetch: the values on screen may predate
   // the reveal window's expiry, so don't keep showing them while loading.
   const expire = useCallback(() => {
-    setSeries(null);
+    setData(null);
     setOverview((ov) =>
       ov ? { ...ov, me: { ...ov.me, censored: true, revealed: false, reveal_expires: null } } : ov
     );
@@ -58,12 +66,12 @@ export function useNetwrth(hass: Hass, entry: string | undefined, range: RangeKe
 
   useEffect(() => {
     let alive = true;
-    Promise.all([fetchOverview(hass, entry), fetchSeries(hass, entry, range)])
-      .then(([ov, se]) => {
+    Promise.all([fetchOverview(hass, entry), fetchData(hass, entry)])
+      .then(([ov, out]) => {
         if (!alive) return;
         setOverview(ov);
-        setSeries(se.series);
-        setMasked(se.censored);
+        setData(out.data);
+        setMasked(out.censored);
         setError(null);
       })
       .catch((e) => {
@@ -75,7 +83,7 @@ export function useNetwrth(hass: Hass, entry: string | undefined, range: RangeKe
       alive = false;
       clearInterval(timer);
     };
-  }, [hass, entry, range, tick, refresh]);
+  }, [hass, entry, fetchData, tick, refresh]);
 
   // Censor-state push: when any card (or device, or automation) flips this
   // key's censor state, the integration fires an event and every subscribed
@@ -133,7 +141,22 @@ export function useNetwrth(hass: Hass, entry: string | undefined, range: RangeKe
     };
   }, [revealedUntil, expire, refresh]);
 
-  return { overview, series, masked, error, refresh };
+  return { overview, data, masked, error, refresh };
+}
+
+// The original account-series cycle, now a thin wrapper over the core.
+export function useNetwrth(hass: Hass, entry: string | undefined, range: RangeKey) {
+  const fetchData = useCallback(
+    (h: Hass, e: string | undefined) =>
+      fetchSeries(h, e, range).then((se) => ({ data: se.series, censored: se.censored })),
+    [range]
+  );
+  const { overview, data, masked, error, refresh } = useNetwrthCore<AccountSeries[]>(
+    hass,
+    entry,
+    fetchData
+  );
+  return { overview, series: data, masked, error, refresh };
 }
 
 const LockIcon = ({ open }: { open: boolean }) => (

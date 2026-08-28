@@ -16,7 +16,7 @@
 
 1. **HACS** → ⋮ → *Custom repositories* → add `https://github.com/eduser25/netwrth-hacs` as **Integration**, install, restart.
 2. **netwrth** → *Settings → Integrations → New API key*. Two scopes:
-   - `censored only` — can never see real amounts, only percentages. No PIN, nothing to leak. Perfect for wall tablets.
+   - `censored only` — can never see real amounts, only percentages. No PIN. Good for wall tablets — but note: if your netwrth account has spending analysis, this scope does see spending *metadata* (merchant names, dates, themes, recurring streams); only the dollars stay hidden.
    - `full access` — still starts censored; real amounts appear only after a PIN reveal, and auto-conceal after a timer.
 3. **HA** → *Settings → Devices & services → Add integration → netwrth* → paste URL + key.
 
@@ -55,7 +55,7 @@ show_mode_selector: false  # pin the mode: hide its toggle
 show_range_selector: false # pin the range: hide its toggle
 ```
 
-**Stacked** breaks the total down by account, debt below the zero line:
+**Stacked** shows what moved the total: each bar is one day/week/month, split by account — gains stack up from the axis, losses stack down, and the dotted trace is the net change:
 
 <p align="center"><img src="docs/img/stacked.png" alt="stacked mode" width="640"></p>
 
@@ -105,6 +105,38 @@ show_range_selector: false # optional: pin the range
 accounts:                  # optional: only these (name match, case-insensitive)
   - Savings
   - Roth IRA
+```
+
+### Spending — `netwrth-spending-card`
+
+Counterpart of the web dashboard's spending tab summary: the Spent / Income / Recurring stat strip, the share-of-spending donut, and the "where it went" theme bars with a read-only transaction drill-down. Month stepper in the header. Spending analysis is a per-user netwrth feature — accounts without it see a "not enabled" note.
+
+<p align="center"><img src="docs/img/spending.png" alt="spending card" width="640"></p>
+
+```yaml
+type: custom:netwrth-spending-card
+show_stats: true    # optional: the Spent / Income / Recurring strip
+show_donut: true    # optional: the share donut
+```
+
+### Recurring bills — `netwrth-bills-card`
+
+The month's bill calendar: lollipops by day of month — filled chip with a theme-colored ring where the charge landed, hollow where it's still expected, amber where it was expected but never arrived — income pills along the top, a today line, and sub-monthly + lapsed streams in the chip strip.
+
+<p align="center"><img src="docs/img/bills.png" alt="recurring bills card" width="640"></p>
+
+```yaml
+type: custom:netwrth-bills-card
+```
+
+### Card credit — `netwrth-cardcycle-card`
+
+Per credit card (tabs when you have several): the balance's climb and payment drops across the month, payments as green drop-line markers, a fainter stretch where the balance is reconstructed from transactions before the first snapshot, and a hover readout that says which is which.
+
+<p align="center"><img src="docs/img/cardcycle.png" alt="card credit card" width="640"></p>
+
+```yaml
+type: custom:netwrth-cardcycle-card
 ```
 
 ## Sensors

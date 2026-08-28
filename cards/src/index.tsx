@@ -1,4 +1,7 @@
 import AccountsCard from "./cards/AccountsCard";
+import BillsCard from "./cards/BillsCard";
+import CardCycleCard from "./cards/CardCycleCard";
+import SpendingCard from "./cards/SpendingCard";
 import StatCard from "./cards/StatCard";
 import WorthCard from "./cards/WorthCard";
 import { defineCard } from "./registerCard";
@@ -81,7 +84,7 @@ defineCard({
           mode: "dropdown",
           options: [
             { value: "total", label: "Total" },
-            { value: "stacked", label: "Stacked by account" },
+            { value: "stacked", label: "What moved (stacked account changes)" },
             { value: "category", label: "Retirement vs taxable vs debt" },
             { value: "flow", label: "Net flow bars" },
           ],
@@ -149,6 +152,54 @@ defineCard({
     themeField,
   ],
   stub: { view: "all", range: "1m" },
+  size: 4,
+});
+
+// Spending cards (per-user feature on the netwrth side: accounts without it
+// see a "not enabled" note instead of data).
+
+defineCard({
+  tag: "netwrth-spending-card",
+  name: "netwrth spending",
+  description: "Where the month's money went: totals, share donut, and theme breakdown.",
+  component: SpendingCard,
+  schema: [
+    titleField,
+    entryField,
+    {
+      name: "show_stats",
+      label: "Show Spent / Income / Recurring tiles",
+      selector: { boolean: {} },
+    },
+    {
+      name: "show_donut",
+      label: "Show share-of-spending donut",
+      selector: { boolean: {} },
+    },
+    concealField,
+    themeField,
+  ],
+  stub: {},
+  size: 6,
+});
+
+defineCard({
+  tag: "netwrth-bills-card",
+  name: "netwrth recurring bills",
+  description: "Calendar of the month's bills and income — charged, expected, and overdue.",
+  component: BillsCard,
+  schema: [titleField, entryField, concealField, themeField],
+  stub: {},
+  size: 5,
+});
+
+defineCard({
+  tag: "netwrth-cardcycle-card",
+  name: "netwrth card credit",
+  description: "Per credit card: balance through the month with payment markers.",
+  component: CardCycleCard,
+  schema: [titleField, entryField, concealField, themeField],
+  stub: {},
   size: 4,
 });
 

@@ -5,15 +5,17 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  ComposedChart,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 import { Account, ChartMode, RangeKey } from "../lib/types";
-import { Row, debtOfRow, flowSeries, sumRow } from "../lib/series";
+import { Row, debtOfRow, deltaSeries, flowSeries, sumRow } from "../lib/series";
 import { money, moneyCompact, pct, shortDate, signedMoney } from "../lib/format";
 
 export type { ChartMode };
@@ -176,56 +178,108 @@ export default function Chart({
     );
   }
 
-  // stacked mode below: censored values stay on the %-of-net-worth scale
-  const fmtYStacked = (v: number) => (masked ? v.toFixed(1) : axisMoney(v));
-  const fmtValStacked = (v: number) => (masked ? v.toFixed(2) : money(v, true));
-
-  // stacked: assets stack as areas; debt (if any) drawn as a line below zero
-  const assetAccounts = accounts.filter((a) => {
-    const last = rows[rows.length - 1]?.values[a.id] ?? 0;
-    return last >= 0;
-  });
-  const hasDebt = accounts.length > assetAccounts.length;
-  const data = rows.map((r) => {
-    const d: Record<string, number> = { ts: r.ts };
-    for (const a of assetAccounts) d[`a${a.id}`] = r.values[a.id] ?? 0;
-    if (hasDebt) d.debt = debtOfRow(r, accounts);
+  // stacked: who moved the total — per-account balance changes per calendar
+  // bucket, positives stacking up from the axis and negatives down
+  // (stackOffset="sign"); the dotted trace is each bucket's net. Stacking
+  // absolute balances just showed "the big account is big"; stacking deltas
+  // answers the question people were opening this mode for. Censored,
+  // deltas are percentage-point moves — geometry survives.
+  const fmtDelta = (v: number) =>
+    masked ? `${v >= 0 ? "+" : ""}${v.toFixed(2)}` : signedMoney(v);
+  const fmtYDelta = (v: number) => (masked ? v.toFixed(1) : axisMoney(v));
+  const buckets = deltaSeries(rows, accounts, range);
+  // Accounts that never moved in the window would only add zero-height
+  // segments and tooltip noise.
+  const moved = accounts.filter((a) =>
+    buckets.some((b) => Math.abs(b.deltas[a.id] ?? 0) > 0.004)
+  );
+  const data = buckets.map((b) => {
+    const d: Record<string, number> = { ts: b.ts, net: b.net };
+    for (const a of moved) d[`a${a.id}`] = b.deltas[a.id] ?? 0;
     return d;
   });
-  // Axis extent for the stack: sum of assets per row, debt below zero.
-  const stackExtent = data.flatMap((d) => [
-    assetAccounts.reduce((sum, a) => sum + ((d[`a${a.id}`] as number) ?? 0), 0),
-    (d.debt as number) ?? 0,
-  ]);
+  // Axis extent: each bucket's positive stack and negative stack.
+  const stackExtent = buckets.flatMap((b) => {
+    let pos = 0;
+    let neg = 0;
+    for (const a of moved) {
+      const d = b.deltas[a.id] ?? 0;
+      if (d >= 0) pos += d;
+      else neg += d;
+    }
+    return [pos, neg];
+  });
+  const accLabel = (a: Account) => `${a.org_name || a.org_domain} · ${a.nickname || a.name}`;
+
+  type TipEntry = { dataKey?: string | number; value?: number | string; color?: string };
+  const DeltaTip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean;
+    payload?: TipEntry[];
+    label?: number;
+  }) => {
+    if (!active || !payload || payload.length === 0) return null;
+    const parts = payload
+      .filter((p) => p.dataKey !== "net" && Math.abs(Number(p.value)) > 0.004)
+      .sort((x, y) => Math.abs(Number(y.value)) - Math.abs(Number(x.value)));
+    const net = payload.find((p) => p.dataKey === "net");
+    return (
+      <div style={{ ...tooltipStyle, padding: "8px 12px" }}>
+        <div style={{ marginBottom: 4 }}>{shortDate(label ?? 0)}</div>
+        {parts.map((p) => {
+          const acc = moved.find((a) => `a${a.id}` === p.dataKey);
+          return (
+            <div key={String(p.dataKey)} style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
+              <span style={{ color: p.color }}>{acc ? accLabel(acc) : String(p.dataKey)}</span>
+              <span>{fmtDelta(Number(p.value))}</span>
+            </div>
+          );
+        })}
+        {net && (
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginTop: 4, color: "#8b9bb4" }}>
+            <span>net</span>
+            <span>{fmtDelta(Number(net.value))}</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <ResponsiveContainer width="100%" height={340}>
-      <AreaChart data={data} margin={MARGIN}>
+      <ComposedChart data={data} stackOffset="sign" margin={MARGIN}>
         <CartesianGrid stroke="#223047" strokeDasharray="3 3" />
-        <XAxis dataKey="ts" tickFormatter={fmtX} tick={axisStyle} minTickGap={40} />
-        <YAxis tickFormatter={fmtYStacked} tick={axisStyle} width={yAxisWidth(fmtYStacked, stackExtent)} domain={["auto", "auto"]} />
-        <Tooltip
-          contentStyle={tooltipStyle}
-          labelFormatter={(ts) => shortDate(ts as number, true)}
-          formatter={(v, name) => {
-            const acc = assetAccounts.find((a) => `a${a.id}` === name);
-            return [fmtValStacked(v as number), acc ? `${acc.org_name || acc.org_domain} · ${acc.nickname || acc.name}` : "Debt"];
-          }}
-        />
-        {assetAccounts.map((a, i) => (
-          <Area
+        <XAxis dataKey="ts" tickFormatter={(ts) => shortDate(ts as number)} tick={axisStyle} minTickGap={40} />
+        <YAxis tickFormatter={fmtYDelta} tick={axisStyle} width={yAxisWidth(fmtYDelta, stackExtent)} />
+        <Tooltip content={<DeltaTip />} cursor={{ fill: "#223047", fillOpacity: 0.4 }} />
+        <ReferenceLine y={0} stroke="#8b9bb4" strokeOpacity={0.6} />
+        {/* Animation off: sign-stacked bar rects don't materialize until the
+            grow animation's first frame, which never comes on throttled
+            background tabs (wall panels). */}
+        {moved.map((a, i) => (
+          <Bar
             key={a.id}
-            type="monotone"
             dataKey={`a${a.id}`}
-            stackId="assets"
-            stroke={PALETTE[i % PALETTE.length]}
+            stackId="delta"
             fill={PALETTE[i % PALETTE.length]}
-            fillOpacity={0.35}
+            fillOpacity={0.8}
+            isAnimationActive={false}
           />
         ))}
-        {hasDebt && (
-          <Area type="monotone" dataKey="debt" stroke="#f87171" fill="#f87171" fillOpacity={0.25} />
-        )}
-      </AreaChart>
+        <Line
+          type="monotone"
+          dataKey="net"
+          stroke="#e6edf7"
+          strokeWidth={1.5}
+          strokeOpacity={0.65}
+          strokeDasharray="4 3"
+          dot={{ r: 2, fill: "#e6edf7", strokeWidth: 0 }}
+          isAnimationActive={false}
+        />
+      </ComposedChart>
     </ResponsiveContainer>
   );
 }
