@@ -18,7 +18,7 @@
 2. **netwrth** → *Settings → Integrations → New API key*. Two scopes:
    - `censored only` — can never see real amounts, only percentages. No PIN. Good for wall tablets — but note: if your netwrth account has spending analysis, this scope does see spending *metadata* (merchant names, dates, themes, recurring streams); only the dollars stay hidden.
    - `full access` — still starts censored; real amounts appear only after a PIN reveal, and auto-conceal after a timer.
-3. **HA** → *Settings → Devices & services → Add integration → netwrth* → paste URL + key.
+3. **HA** → *Settings → Devices & services → Add integration → netwrth* → paste the key.
 
 Cards register themselves. YAML-mode dashboards add the resource manually:
 
@@ -109,7 +109,7 @@ accounts:                  # optional: only these (name match, case-insensitive)
 
 ### Spending — `netwrth-spending-card`
 
-Counterpart of the web dashboard's spending tab summary: the Spent / Income / Recurring stat strip, the share-of-spending donut, and the "where it went" theme bars with a read-only transaction drill-down. Month stepper in the header. Spending analysis is a per-user netwrth feature — accounts without it see a "not enabled" note.
+Counterpart of the web dashboard's spending tab summary: the Spent / Income / Recurring stat strip, the share-of-spending donut, and the "where it went" theme bars with a read-only transaction drill-down. Month stepper in the header. Spending analysis is a per-user netwrth feature — accounts without it see an error note instead of the card.
 
 <p align="center"><img src="docs/img/spending.png" alt="spending card" width="640"></p>
 
@@ -141,19 +141,30 @@ type: custom:netwrth-cardcycle-card
 
 ## Sensors
 
-Censor-safe, always available: total change % (day/week/month/year), per-kind shares %, last balance update, account count, `binary_sensor` censored + data-stale. Real-currency sensors are an explicit opt-in in the integration options — they write real amounts into HA's recorder history while revealed.
+Censor-safe and always created:
+
+- **Total change (day / week / month / year)** — % change of the total over each window.
+- **Cash / Investment / Credit / Loan / Other share** — each kind's % of the total.
+- **Last balance update** — timestamp of the newest balance.
+- **Accounts** — count of visible accounts.
+- **Censored** (binary) — on while amounts are censored.
+- **Data stale** (binary, problem) — on when the newest balance is older than 48 h.
+
+Real-currency sensors — **Total** plus a per-kind total each — are an explicit opt-in in the integration options (the option only appears on full-access keys). They ship disabled in the entity registry, so enable the ones you want by hand, and they go **unavailable while censored**: dollars only reach HA's recorder during a reveal window.
+
+Entity ids are prefixed with the device name, which comes from your API key's label — a key labeled `Wall tablet` yields `sensor.netwrth_wall_tablet_total_change_week`:
 
 ```yaml
 # alert on a bad week
 automation:
   - trigger:
       - platform: numeric_state
-        entity_id: sensor.netwrth_total_change_week
+        entity_id: sensor.netwrth_wall_tablet_total_change_week
         below: -5
     action:
       - action: notify.mobile_app_phone
         data:
-          message: "balances down {{ states('sensor.netwrth_total_change_week') }}% this week"
+          message: "balances down {{ states('sensor.netwrth_wall_tablet_total_change_week') }}% this week"
 ```
 
 ## Services
@@ -172,12 +183,15 @@ automation:
 
 ## Options
 
-*Devices & services → netwrth → Configure*: polling interval (15 min), default auto-conceal window (15 min, 0 = stay revealed), real-currency sensor opt-in.
+*Devices & services → netwrth → Configure*: polling interval (15 min), default auto-conceal window (15 min, 0 = stay revealed), real-currency sensor opt-in (full-access keys only).
 
 ## Development
 
 ```sh
-cd cards && npm install && npm run build   # emits custom_components/netwrth/frontend/netwrth-cards.js
+cd cards && npm install && npm run typecheck && npm run build
+# emits custom_components/netwrth/frontend/netwrth-cards.js
 ```
+
+HA serves the bundle with `?v=<manifest version>` as cache-buster — bump `version` in `custom_components/netwrth/manifest.json` with any bundle change, or browsers keep the old cards.
 
 Chart components under `cards/src/{components,lib}` are vendored from the netwrth web app — the rendering is code-identical. Screenshots show demo data.
