@@ -212,13 +212,19 @@ export default function CardCycleCard({
             ...payments.map((p) => p.amount)
           );
           const y = (v: number) => H - PAD.bottom - (v / maxDebt) * (H - PAD.top - PAD.bottom);
+          const now = new Date();
+          const todayX = now >= from && now < to ? x(now) : null;
+          // A finished month's balance holds to the right edge; the current
+          // month's observation stops at today — no line for days that
+          // haven't happened yet.
+          const edgeX = todayX ?? W - PAD.right;
           // Step paths: balance holds until the next point.
           const stepPath = (pts: { ts: Date; debt: number }[], extendToEdge: boolean) => {
             let p = "";
             pts.forEach((pt, i) => {
               p += i === 0 ? `M${x(pt.ts)},${y(pt.debt)}` : `H${x(pt.ts)}V${y(pt.debt)}`;
             });
-            if (p && extendToEdge) p += `H${W - PAD.right}`;
+            if (p && extendToEdge) p += `H${edgeX}`;
             return p;
           };
           const reconPath = stepPath(recon, line.length === 0);
@@ -229,8 +235,6 @@ export default function CardCycleCard({
           const areaPath = all.length
             ? `${stepPath(all, true)} V${H - PAD.bottom} H${x(all[0].ts)} Z`
             : "";
-          const now = new Date();
-          const todayX = now >= from && now < to ? x(now) : null;
           const name = card.nickname ?? card.name;
           return (
             <div key={card.id} className="spend-card-row">
@@ -261,6 +265,11 @@ export default function CardCycleCard({
                   const t =
                     from.getTime() +
                     ((cx - PAD.left) / (W - PAD.left - PAD.right)) * daysInMonth * 86400000;
+                  // Nothing to read out past today: the line stops there.
+                  if (todayX !== null && t > now.getTime()) {
+                    setHover(null);
+                    return;
+                  }
                   const day = new Date(t).getUTCDate();
                   const yOf = y;
                   // A payment marker under the cursor wins over the line.
