@@ -20,9 +20,6 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
-          # brands needs a home-assistant/brands PR; do that with the
-          # default-store submission once the repo is public and licensed.
-          ignore: brands
 
   cards:
     runs-on: ubuntu-latest
