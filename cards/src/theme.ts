@@ -1,7 +1,10 @@
 // Card chrome styles injected into each card's shadow root. Two token sets:
 // "netwrth" carries the app's own dark identity; "ha" maps the tokens onto the
-// active Home Assistant theme instead. (Chart series colors stay on the
-// netwrth palette either way for now.)
+// active Home Assistant theme instead — including the theme's card chrome
+// (ha-card-* background, border, shadow, backdrop blur), so a glass theme
+// makes netwrth cards glass too. Chart chrome (grid, axes, tooltip, the
+// total line's accent→green gradient) rides the same tokens; the per-account
+// and per-theme series palettes stay fixed so a color keeps meaning something.
 export type ThemeMode = "netwrth" | "ha";
 
 const NETWRTH_TOKENS = `
@@ -16,6 +19,11 @@ const NETWRTH_TOKENS = `
   --nb-ink: #7ea8dc;
   --nb-warn: #fbbf24;
   --nb-radius: 12px;
+  --nb-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --nb-border-width: 1px;
+  --nb-shadow: none;
+  --nb-backdrop: none;
 `;
 
 const HA_TOKENS = `
@@ -30,23 +38,79 @@ const HA_TOKENS = `
   --nb-ink: #4a7cc0;
   --nb-warn: var(--warning-color, #b45309);
   --nb-radius: var(--ha-card-border-radius, 12px);
+  --nb-font: var(--ha-card-font-family, var(--primary-font-family, Roboto, sans-serif));
+  --nb-border-width: var(--ha-card-border-width, 1px);
+  --nb-shadow: var(--ha-card-box-shadow, none);
+  --nb-backdrop: var(--ha-card-backdrop-filter, none);
 `;
 
 export function cardCss(mode: ThemeMode): string {
   return `
-  :host { display: block; }
-  * { box-sizing: border-box; }
-  .card {
-    ${mode === "ha" ? HA_TOKENS : NETWRTH_TOKENS}
+  :host {
+    display: block;
     position: relative;
+    ${mode === "ha" ? HA_TOKENS : NETWRTH_TOKENS}
+  }
+  * { box-sizing: border-box; }
+  /* Overlay layer: sibling of .card, so it escapes the card's stacking
+     context and floats over neighbouring cards. */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    overflow: visible;
+    z-index: 20;
+    pointer-events: none;
+    color: var(--nb-text);
+    font-family: var(--nb-font);
+    font-size: 14px;
+  }
+  .overlay::backdrop { display: none; }
+  .overlay > * { pointer-events: auto; }
+  .card {
+    position: relative;
+    /* Own stacking context so the ambient layer's z-index -1 sits between
+       the card background and the content instead of under the page. */
+    isolation: isolate;
     background: var(--nb-bg);
-    border: 1px solid var(--nb-border);
+    border: var(--nb-border-width) solid var(--nb-border);
     border-radius: var(--nb-radius);
+    box-shadow: var(--nb-shadow);
+    -webkit-backdrop-filter: var(--nb-backdrop);
+    backdrop-filter: var(--nb-backdrop);
     padding: 14px 16px;
     color: var(--nb-text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-      "Helvetica Neue", Arial, sans-serif;
+    font-family: var(--nb-font);
     font-size: 14px;
+  }
+  /* Ambient background: the app's canvas effect clipped to the card, plus
+     a faint accent wash in the top-right corner. Content stays clickable
+     (pointer-events none) and readable (low alpha strokes only). */
+  .ambient {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .ambient::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(70% 55% at 100% 0%,
+      color-mix(in srgb, var(--nb-accent) 9%, transparent), transparent 70%);
+  }
+  .ambient canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    color: var(--nb-accent);
   }
   .head {
     display: flex;
@@ -118,11 +182,63 @@ export function cardCss(mode: ThemeMode): string {
   }
   .reveal-note { font-size: 11px; color: var(--nb-muted); }
 
-  /* stat card */
-  .stat-value { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
-  .stat-delta { font-size: 13px; margin-top: 2px; }
+  /* stat card (the web hero, card-sized): one big number, its change as a
+     tinted chip, and — uncensored — the composition bar under it. */
+  .stat-value {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-delta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--nb-muted);
+  }
+  .chip {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    background: color-mix(in srgb, var(--nb-green) 14%, transparent);
+    color: var(--nb-green);
+  }
+  .chip.down {
+    background: color-mix(in srgb, var(--nb-red) 14%, transparent);
+    color: var(--nb-red);
+  }
   .up { color: var(--nb-green); }
   .down { color: var(--nb-red); }
+  .comp { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .comp-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; gap: 3px; }
+  .comp-bar span { display: block; height: 100%; min-width: 4px; border-radius: 2px; }
+  .comp-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+  .comp-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--nb-muted);
+    white-space: nowrap;
+  }
+  .comp-item b { color: var(--nb-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .comp-dot { width: 8px; height: 8px; border-radius: 2.5px; flex: none; }
+  /* Banner layout: everything on one row. The header keeps its place at
+     the left (title) and right (lock), the number and chip sit between,
+     and the composition bar takes whatever width is left. */
+  .stat-banner { padding: 10px 16px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px 18px; }
+  .stat-banner .head { margin: 0; flex: none; display: contents; }
+  .stat-banner .head h2 { flex: none; order: 0; }
+  .stat-banner .head .head-right { order: 10; margin-left: auto; }
+  .stat-banner .stat-value { order: 1; font-size: 24px; }
+  .stat-banner .stat-delta { order: 2; margin-top: 0; }
+  .stat-banner .comp { order: 3; flex: 1 1 260px; margin-top: 0; gap: 5px; min-width: 200px; }
+  .stat-banner .status, .stat-banner .error-box { order: 1; flex: 1; padding: 6px 0; }
 
   /* accounts card */
   table { width: 100%; border-collapse: collapse; }
@@ -145,7 +261,25 @@ export function cardCss(mode: ThemeMode): string {
     margin-right: 7px;
     background: var(--nb-green);
   }
-  .dot.stale { background: #fbbf24; }
+  .dot.stale { background: var(--nb-warn); }
+  td.name-cell { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .name-cell .dot { margin: 0; flex: none; }
+  .name-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+  .name-text .muted { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* Institution monogram: the web's account-card tile, row-sized. */
+  .mono {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, var(--mono-a, #3b82f6), var(--mono-b, #2563eb));
+  }
 
   /* pin pad overlay */
   .pin-wrap {

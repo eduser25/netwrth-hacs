@@ -1,3 +1,4 @@
+import Ambient from "../components/Ambient";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   Hass,
@@ -5,7 +6,14 @@ import {
   fetchSpendingTransactions,
 } from "../lib/ha";
 import { AccountSeries, SpendingTxn } from "../lib/types";
-import { BaseCardConfig, LockControl, useNetwrthCore, useVisibleAccounts } from "./common";
+import {
+  BaseCardConfig,
+  LockControl,
+  Overlay,
+  ambientEffect,
+  useNetwrthCore,
+  useVisibleAccounts,
+} from "./common";
 import { MonthNav, amt, currentMonth } from "./spendingCommon";
 
 // The credit-card cycle: per card, how the balance climbs with purchases
@@ -168,6 +176,7 @@ export default function CardCycleCard({
 
   return (
     <div className="card">
+      <Ambient effect={ambientEffect(config)} />
       <div className="head">
         <h2>{config.title ?? "Card credit"}</h2>
         <span className="head-right">
@@ -363,6 +372,7 @@ export default function CardCycleCard({
           );
         })}
       {hover && (
+        <Overlay>
         <div
           className="spend-hoverbubble"
           style={{
@@ -381,6 +391,7 @@ export default function CardCycleCard({
           </div>
           <div className="muted spend-hoverbubble-note">{hover.note}</div>
         </div>
+        </Overlay>
       )}
     </div>
   );

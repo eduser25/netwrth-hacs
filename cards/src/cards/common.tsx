@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AccountSeries, RangeKey } from "../lib/types";
 import {
   CensorChangedEvent,
@@ -11,6 +12,7 @@ import {
   reveal,
 } from "../lib/ha";
 import PinPad from "../components/PinPad";
+import { AmbientEffect } from "../components/Ambient";
 
 // Every card carries these; specific cards extend it.
 export type BaseCardConfig = {
@@ -18,8 +20,77 @@ export type BaseCardConfig = {
   entry?: string;
   title?: string;
   theme?: "netwrth" | "ha";
+  // Ambient canvas behind the content (the web app's background effects).
+  // Unset: plexus on the netwrth theme, off when following the HA theme —
+  // a card that blends into someone's theme shouldn't bring its own weather.
+  background?: AmbientEffect;
+  // Seeded sample data instead of a connection: preview a card before
+  // connecting, or stage a dashboard for screenshots. PIN 1234.
+  demo?: boolean;
   auto_conceal_minutes?: number;
 };
+
+// Overlays (PIN pad, hover bubbles) must float above neighbouring cards. No
+// z-index inside the card can guarantee that: .card is a stacking context
+// (for the ambient layer) and so are HA's own grid wrappers. The element host
+// provides a `popover="manual"` layer outside .card; Overlay portals into it
+// and shows it, which puts it in the browser's top layer — above every
+// stacking context on the page, shadow DOM included.
+export const OverlayContext = createContext<HTMLElement | null>(null);
+
+export function Overlay({ children }: { children: React.ReactNode }) {
+  const el = useContext(OverlayContext);
+  useEffect(() => {
+    if (!el) return;
+    const anyEl = el as HTMLElement & { showPopover?: () => void; hidePopover?: () => void };
+    const n = Number(el.dataset.open ?? 0) + 1;
+    el.dataset.open = String(n);
+    if (n === 1 && anyEl.showPopover) {
+      try {
+        anyEl.showPopover();
+      } catch {
+        /* already open, or popover unsupported: the layer still renders in place */
+      }
+    }
+    return () => {
+      const left = Number(el.dataset.open ?? 1) - 1;
+      el.dataset.open = String(Math.max(0, left));
+      if (left <= 0 && anyEl.hidePopover) {
+        try {
+          anyEl.hidePopover();
+        } catch {
+          /* already hidden */
+        }
+      }
+    };
+  }, [el]);
+  return el ? createPortal(children, el) : <>{children}</>;
+}
+
+// Viewport position for a popover-hosted pad, hanging off the host card's
+// top-right corner like the in-card version does. Null when there is no
+// overlay layer (the demo harness fallback keeps the absolute CSS).
+export function useOverlayAnchor(open: boolean): React.CSSProperties | undefined {
+  const el = useContext(OverlayContext);
+  return useMemo(() => {
+    if (!el || !open) return undefined;
+    const host = (el.getRootNode() as ShadowRoot).host as HTMLElement | undefined;
+    if (!host) return undefined;
+    const r = host.getBoundingClientRect();
+    const PAD_W = 204;
+    return {
+      position: "fixed",
+      top: Math.round(r.top + 48),
+      left: Math.round(Math.max(8, Math.min(window.innerWidth - PAD_W - 8, r.right - 12 - PAD_W))),
+      right: "auto",
+    };
+  }, [el, open]);
+}
+
+export function ambientEffect(config: BaseCardConfig): AmbientEffect {
+  if (config.background) return config.background;
+  return config.theme === "ha" ? "off" : "plexus";
+}
 
 const REFRESH_MS = 60_000;
 
@@ -183,6 +254,7 @@ export function LockControl({
 }) {
   const [open, setOpen] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const anchor = useOverlayAnchor(open);
   const me = overview.me;
   if (!me.can_reveal) return null; // censored-only key: no affordance at all
 
@@ -227,18 +299,20 @@ export function LockControl({
         <LockIcon open={!me.censored} />
       </button>
       {open && me.censored && (
-        <div className="pin-wrap">
-          <PinPad
-            onSubmit={doReveal}
-            error={err}
-            label={ttl > 0 ? `Reveal for ${ttl} min` : "Reveal until concealed"}
-            footer={
-              <button className="pin-footer" onClick={() => setOpen(false)}>
-                Cancel
-              </button>
-            }
-          />
-        </div>
+        <Overlay>
+          <div className="pin-wrap" style={anchor}>
+            <PinPad
+              onSubmit={doReveal}
+              error={err}
+              label={ttl > 0 ? `Reveal for ${ttl} min` : "Reveal until concealed"}
+              footer={
+                <button className="pin-footer" onClick={() => setOpen(false)}>
+                  Cancel
+                </button>
+              }
+            />
+          </div>
+        </Overlay>
       )}
     </>
   );

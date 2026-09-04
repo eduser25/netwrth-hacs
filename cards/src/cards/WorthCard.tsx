@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import Chart from "../components/Chart";
+import Ambient from "../components/Ambient";
 import { Hass } from "../lib/ha";
 import { alignSeries } from "../lib/series";
 import { ChartMode, RANGES, RangeKey } from "../lib/types";
@@ -10,6 +11,7 @@ import {
   Segmented,
   useNetwrth,
   useVisibleAccounts,
+  ambientEffect,
 } from "./common";
 
 export type WorthCardConfig = BaseCardConfig & {
@@ -56,6 +58,7 @@ export default function WorthCard({
 
   return (
     <div className="card">
+      <Ambient effect={ambientEffect(config)} />
       <div className="head">
         <h2>{config.title ?? view.label}</h2>
         <span className="head-right">

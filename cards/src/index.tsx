@@ -20,6 +20,29 @@ const themeField = {
   },
 };
 
+const backgroundField = {
+  name: "background",
+  label: "Card background effect",
+  selector: {
+    select: {
+      mode: "dropdown",
+      options: [
+        { value: "plexus", label: "Plexus (default on the netwrth theme)" },
+        { value: "mesh", label: "Mesh" },
+        { value: "dots", label: "Dots" },
+        { value: "contour", label: "Contour" },
+        { value: "off", label: "Off (default when following the HA theme)" },
+      ],
+    },
+  },
+};
+
+const demoField = {
+  name: "demo",
+  label: "Demo data (seeded sample, no connection needed — PIN 1234)",
+  selector: { boolean: {} },
+};
+
 const entryField = { name: "entry", label: "netwrth connection", selector: {} };
 const titleField = { name: "title", label: "Title", selector: { text: {} } };
 const viewField = {
@@ -97,6 +120,8 @@ defineCard({
     compactField,
     concealField,
     themeField,
+    backgroundField,
+    demoField,
   ],
   stub: { view: "all", range: "6m" },
   size: 6,
@@ -117,6 +142,8 @@ defineCard({
     compactField,
     concealField,
     themeField,
+    backgroundField,
+    demoField,
   ],
   stub: { range: "3m" },
   size: 6,
@@ -127,7 +154,35 @@ defineCard({
   name: "netwrth stat",
   description: "One big number with its change over a window.",
   component: StatCard,
-  schema: [titleField, entryField, viewField, rangeField, rangeToggleField, concealField, themeField],
+  schema: [
+    titleField,
+    entryField,
+    viewField,
+    rangeField,
+    rangeToggleField,
+    {
+      name: "show_composition",
+      label: "Show composition bar (uncensored)",
+      selector: { boolean: {} },
+    },
+    {
+      name: "layout",
+      label: "Layout",
+      selector: {
+        select: {
+          mode: "dropdown",
+          options: [
+            { value: "card", label: "Card (number over the bar)" },
+            { value: "banner", label: "Banner (one slim row, for a full-width strip)" },
+          ],
+        },
+      },
+    },
+    concealField,
+    themeField,
+    backgroundField,
+    demoField,
+  ],
   stub: { view: "all", range: "1m" },
   size: 2,
 });
@@ -150,6 +205,8 @@ defineCard({
     },
     concealField,
     themeField,
+    backgroundField,
+    demoField,
   ],
   stub: { view: "all", range: "1m" },
   size: 4,
@@ -178,6 +235,8 @@ defineCard({
     },
     concealField,
     themeField,
+    backgroundField,
+    demoField,
   ],
   stub: {},
   size: 6,
@@ -188,7 +247,7 @@ defineCard({
   name: "netwrth recurring bills",
   description: "Calendar of the month's bills and income — charged, expected, and overdue.",
   component: BillsCard,
-  schema: [titleField, entryField, concealField, themeField],
+  schema: [titleField, entryField, concealField, themeField, backgroundField, demoField],
   stub: {},
   size: 5,
 });
@@ -198,10 +257,13 @@ defineCard({
   name: "netwrth card credit",
   description: "Per credit card: balance through the month with payment markers.",
   component: CardCycleCard,
-  schema: [titleField, entryField, concealField, themeField],
+  schema: [titleField, entryField, concealField, themeField, backgroundField, demoField],
   stub: {},
   size: 4,
 });
+
+// The demo harness (cards/demo) drives cards with the same sample dataset.
+export { makeDemoHass } from "./lib/demo";
 
 // eslint-disable-next-line no-console
 console.info("%c netwrth cards %c loaded", "background:#60a5fa;color:#0b0f17;border-radius:3px 0 0 3px;padding:1px 4px", "background:#17202f;color:#e6edf7;border-radius:0 3px 3px 0;padding:1px 4px");

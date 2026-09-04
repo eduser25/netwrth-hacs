@@ -1,8 +1,9 @@
 import { ComponentType } from "react";
 import { Root, createRoot } from "react-dom/client";
 import { Hass, listEntries } from "./lib/ha";
+import { demoHass } from "./lib/demo";
 import { ThemeMode, cardCss } from "./theme";
-import { BaseCardConfig } from "./cards/common";
+import { BaseCardConfig, OverlayContext } from "./cards/common";
 
 type SchemaField = { name: string; label: string; selector: Record<string, unknown> };
 
@@ -23,6 +24,7 @@ export function defineCard(def: CardDef): void {
   class NetwrthCard extends HTMLElement {
     private _root?: Root;
     private _mount?: HTMLDivElement;
+    private _overlay?: HTMLDivElement;
     private _style?: HTMLStyleElement;
     private _hass?: Hass;
     private _config?: BaseCardConfig;
@@ -52,6 +54,7 @@ export function defineCard(def: CardDef): void {
           this._root.unmount();
           this._root = undefined;
           this._mount = undefined;
+          this._overlay = undefined;
         }
       }, 100);
     }
@@ -80,12 +83,23 @@ export function defineCard(def: CardDef): void {
       if (!this._mount) {
         this._mount = document.createElement("div");
         shadow.appendChild(this._mount);
+        // Sibling of the card, outside its stacking context: PIN pad and
+        // hover bubbles portal here so they float over neighbouring cards.
+        this._overlay = document.createElement("div");
+        this._overlay.className = "overlay";
+        // Top layer when shown (see Overlay in cards/common.tsx).
+        this._overlay.setAttribute("popover", "manual");
+        shadow.appendChild(this._overlay);
         this._root = createRoot(this._mount);
       }
       const Component = def.component;
+      // demo: true swaps the connection for the seeded sample dataset.
+      const hass = this._config.demo ? demoHass() : this._hass;
       // Keyed on config so option changes reset in-card state (range, mode).
       this._root!.render(
-        <Component key={JSON.stringify(this._config)} hass={this._hass} config={this._config} />
+        <OverlayContext.Provider value={this._overlay ?? null}>
+          <Component key={JSON.stringify(this._config)} hass={hass} config={this._config} />
+        </OverlayContext.Provider>
       );
     }
   }

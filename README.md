@@ -10,7 +10,8 @@
   the app's own charts, censored by default, revealed by PIN for a window you control.
 </p>
 
-<p align="center"><img src="docs/img/worth.png" alt="netwrth worth card" width="640"></p>
+<p align="center"><img src="docs/img/showcase.png" alt="netwrth cards on a Home Assistant dashboard (netwrth theme, sample data)" width="960"></p>
+<p align="center"><sub>The whole set on one dashboard, on the bundled <code>netwrth</code> theme with sample data (<code>demo: true</code>). Same cards on the visionOS glass theme with <code>theme: ha</code>: <a href="docs/img/showcase-glass.png">showcase-glass.png</a>.</sub></p>
 
 ## Install
 
@@ -37,7 +38,13 @@ Amounts are redacted **server-side, before they leave your netwrth deployment**,
 
 ## Cards
 
-All cards share: `entry` (which netwrth connection), `title`, `theme: netwrth | ha`, `auto_conceal_minutes`. Anything with a header toggle can also be fixed by config — set the value and hide its selector.
+All cards share: `entry` (which netwrth connection), `title`, `theme: netwrth | ha`, `background`, `auto_conceal_minutes`. Anything with a header toggle can also be fixed by config — set the value and hide its selector.
+
+- `theme: netwrth` (default) is the app's own dark look. `theme: ha` makes the card follow the active Home Assistant theme — colors *and* card chrome (`ha-card-background`, border, shadow, backdrop blur), so on a glass theme like [visionOS](https://github.com/Nezz/homeassistant-visionos-theme) the netwrth cards turn to glass along with everything else. Chart grid, axes and tooltips follow too; series colors stay fixed so a hue keeps its meaning.
+- `background: plexus | mesh | dots | contour | off` paints the web app's ambient canvas effect behind the card's content. Default: `plexus` on the netwrth theme, `off` when following the HA theme. Animation pauses off-screen and respects `prefers-reduced-motion`.
+- The total line is the web dashboard's: blue-to-mint gradient stroke with a glowing endpoint; the stat card's change is a tinted chip with a composition bar under it.
+
+`themes/netwrth.yaml` ships the same palette as a Home Assistant theme (`netwrth` solid, `netwrth glass` translucent over an aurora ground) — drop it in your `themes/` folder so native tiles sit on the netwrth colors too.
 
 ### Total over time — `netwrth-worth-card`
 
@@ -89,6 +96,8 @@ title: Total
 view: all
 range: 1m
 show_range_selector: false # optional: pin the range
+show_composition: false    # optional: hide the composition bar
+layout: banner             # optional: one slim row for a full-width strip
 ```
 
 ### Accounts — `netwrth-accounts-card`

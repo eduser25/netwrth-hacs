@@ -1,3 +1,4 @@
+import Ambient from "../components/Ambient";
 import { useCallback, useState } from "react";
 import { MASK, money } from "../lib/format";
 import {
@@ -8,7 +9,7 @@ import {
   fetchSpendingTransactions,
 } from "../lib/ha";
 import { SpendingSummary, SpendingTxn } from "../lib/types";
-import { BaseCardConfig, LockControl, useNetwrthCore } from "./common";
+import { BaseCardConfig, LockControl, ambientEffect, useNetwrthCore } from "./common";
 import {
   MonthNav,
   NON_SPEND,
@@ -199,6 +200,7 @@ export default function SpendingCard({
 
   return (
     <div className="card">
+      <Ambient effect={ambientEffect(config)} />
       <div className="head">
         <h2>{config.title ?? "Spending"}</h2>
         <span className="head-right">

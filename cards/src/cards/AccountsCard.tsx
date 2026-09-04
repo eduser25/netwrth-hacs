@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
+import Ambient from "../components/Ambient";
 import { Hass } from "../lib/ha";
 import { money, pct } from "../lib/format";
 import { Account, RANGES, RangeKey } from "../lib/types";
@@ -10,6 +11,7 @@ import {
   isStale,
   useNetwrth,
   useVisibleAccounts,
+  ambientEffect,
 } from "./common";
 
 export type AccountsCardConfig = BaseCardConfig & {
@@ -23,6 +25,25 @@ export type AccountsCardConfig = BaseCardConfig & {
 };
 
 const KIND_ORDER = ["cash", "investment", "credit", "loan", "other"] as const;
+
+// Deterministic monogram gradient per institution (the web's account-card
+// tile): same bank, same tile, on every card and device.
+const MONO_GRADIENTS = [
+  ["#3b82f6", "#2563eb"],
+  ["#10b981", "#059669"],
+  ["#8b5cf6", "#6366f1"],
+  ["#f59e0b", "#d97706"],
+  ["#ec4899", "#db2777"],
+  ["#06b6d4", "#0891b2"],
+] as const;
+
+function monogram(a: Account) {
+  const inst = a.org_name || a.org_domain || a.provider || "?";
+  let hash = 0;
+  for (let i = 0; i < inst.length; i++) hash = (hash * 31 + inst.charCodeAt(i)) | 0;
+  const [g1, g2] = MONO_GRADIENTS[Math.abs(hash) % MONO_GRADIENTS.length];
+  return { letter: inst.trim().charAt(0).toUpperCase() || "?", g1, g2 };
+}
 
 function balanceLabel(a: Account, masked: boolean): string {
   if (a.balance == null) return "–";
@@ -87,6 +108,7 @@ export default function AccountsCard({
 
   return (
     <div className="card">
+      <Ambient effect={ambientEffect(config)} />
       <div className="head">
         <h2>{config.title ?? "Accounts"}</h2>
         <span className="head-right">
@@ -148,12 +170,23 @@ function FragmentRows({
       </tr>
       {accounts.map((a) => {
         const delta = deltas.get(a.id);
+        const mono = monogram(a);
         return (
           <tr key={a.id}>
-            <td>
-              <span className={`dot ${isStale(a.balance_at) ? "stale" : ""}`} />
-              {a.nickname || a.name}
-              <span className="muted"> · {a.org_name || a.org_domain}</span>
+            <td className="name-cell">
+              <span
+                className="mono"
+                style={{ "--mono-a": mono.g1, "--mono-b": mono.g2 } as React.CSSProperties}
+              >
+                {mono.letter}
+              </span>
+              <span className="name-text">
+                <span>{a.nickname || a.name}</span>
+                <span className="muted">
+                  <span className={`dot ${isStale(a.balance_at) ? "stale" : ""}`} />
+                  {a.org_name || a.org_domain}
+                </span>
+              </span>
             </td>
             <td className="num">{balanceLabel(a, masked)}</td>
             <td className={`num row-delta ${delta == null ? "muted" : delta >= 0 ? "up" : "down"}`}>

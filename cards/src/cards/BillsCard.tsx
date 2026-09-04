@@ -1,3 +1,4 @@
+import Ambient from "../components/Ambient";
 import { useCallback, useMemo, useState } from "react";
 import {
   Hass,
@@ -5,7 +6,7 @@ import {
   fetchSpendingRecurring,
 } from "../lib/ha";
 import { RecurringStream } from "../lib/types";
-import { BaseCardConfig, LockControl, useNetwrthCore } from "./common";
+import { BaseCardConfig, LockControl, ambientEffect, useNetwrthCore } from "./common";
 import { MonthNav, amt, currentMonth, themeColor } from "./spendingCommon";
 
 // The recurring-bills calendar: day of month across, cost up. Vendored from
@@ -227,6 +228,7 @@ export default function BillsCard({
 
   return (
     <div className="card">
+      <Ambient effect={ambientEffect(config)} />
       <div className="head">
         <h2>{config.title ?? "Recurring bills"}</h2>
         <span className="head-right">

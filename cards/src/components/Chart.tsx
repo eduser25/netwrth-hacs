@@ -43,12 +43,21 @@ const PALETTE = [
   "#22d3ee", "#fb923c", "#4ade80", "#e879f9", "#93c5fd",
 ];
 
-const axisStyle = { fill: "#8b9bb4", fontSize: 12 };
+// Chart chrome rides the card's tokens (SVG presentation attributes accept
+// var()), so a Home Assistant theme restyles grid, axes and tooltip along
+// with the card. Series hues stay literal: a color keeps its meaning.
+const GRID = "var(--nb-border)";
+const MUTED = "var(--nb-muted)";
+const TEXT = "var(--nb-text)";
+const ACCENT = "var(--nb-accent)";
+const GREEN = "var(--nb-green)";
+const RED = "var(--nb-red)";
+const axisStyle = { fill: MUTED, fontSize: 12 };
 const tooltipStyle = {
-  backgroundColor: "#17202f",
-  border: "1px solid #223047",
+  backgroundColor: "var(--nb-panel-2)",
+  border: "1px solid var(--nb-border)",
   borderRadius: 8,
-  color: "#e6edf7",
+  color: TEXT,
   fontSize: 13,
 };
 
@@ -86,18 +95,18 @@ export default function Chart({
     return (
       <ResponsiveContainer width="100%" height={340}>
         <BarChart data={data} margin={MARGIN}>
-          <CartesianGrid stroke="#223047" strokeDasharray="3 3" />
+          <CartesianGrid stroke={GRID} strokeDasharray="3 3" />
           <XAxis dataKey="ts" tickFormatter={(ts) => shortDate(ts as number)} tick={axisStyle} minTickGap={40} />
           <YAxis tickFormatter={(v) => fmtYFlow(v as number)} tick={axisStyle} width={yAxisWidth(fmtYFlow, data.map((d) => d.flow))} />
           <Tooltip
             contentStyle={tooltipStyle}
             labelFormatter={(ts) => shortDate(ts as number)}
             formatter={(v) => [fmtFlow(v as number), "Net flow"]}
-            cursor={{ fill: "#223047", fillOpacity: 0.4 }}
+            cursor={{ fill: GRID, fillOpacity: 0.4 }}
           />
-          <Bar dataKey="flow" radius={[3, 3, 0, 0]}>
+          <Bar dataKey="flow" radius={[3, 3, 0, 0]} isAnimationActive={false}>
             {data.map((d, i) => (
-              <Cell key={i} fill={d.flow >= 0 ? "#34d399" : "#f87171"} fillOpacity={0.8} />
+              <Cell key={i} fill={d.flow >= 0 ? GREEN : RED} fillOpacity={0.8} />
             ))}
           </Bar>
         </BarChart>
@@ -116,11 +125,15 @@ export default function Chart({
         <AreaChart data={data} margin={MARGIN}>
           <defs>
             <linearGradient id="nw" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#60a5fa" stopOpacity={0.35} />
-              <stop offset="100%" stopColor="#60a5fa" stopOpacity={0} />
+              <stop offset="0%" stopColor={ACCENT} stopOpacity={0.22} />
+              <stop offset="100%" stopColor={ACCENT} stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="nwline" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor={ACCENT} />
+              <stop offset="100%" stopColor={GREEN} />
             </linearGradient>
           </defs>
-          <CartesianGrid stroke="#223047" strokeDasharray="3 3" />
+          <CartesianGrid stroke={GRID} strokeDasharray="3 3" />
           <XAxis dataKey="ts" tickFormatter={fmtX} tick={axisStyle} minTickGap={40} />
           <YAxis tickFormatter={fmtY} tick={axisStyle} width={yAxisWidth(fmtY, data.map((d) => d.total))} domain={["auto", "auto"]} />
           <Tooltip
@@ -128,7 +141,28 @@ export default function Chart({
             labelFormatter={(ts) => shortDate(ts as number, true)}
             formatter={(v) => [fmtVal(v as number), "Total"]}
           />
-          <Area type="monotone" dataKey="total" stroke="#60a5fa" strokeWidth={2} fill="url(#nw)" />
+          <Area
+            type="monotone"
+            dataKey="total"
+            stroke="url(#nwline)"
+            strokeWidth={2.5}
+            fill="url(#nw)"
+            // Endpoint glow on the last point only; other points draw nothing.
+            dot={(props: any) => {
+              const { cx, cy, index, key } = props;
+              if (index !== data.length - 1 || cx == null || cy == null) {
+                return <g key={key} />;
+              }
+              return (
+                <g key={key}>
+                  <circle cx={cx} cy={cy} r={8} fill={GREEN} fillOpacity={0.25} />
+                  <circle cx={cx} cy={cy} r={4} fill={GREEN} />
+                </g>
+              );
+            }}
+            activeDot={{ r: 4, fill: GREEN, stroke: "none" }}
+            isAnimationActive={false}
+          />
         </AreaChart>
       </ResponsiveContainer>
     );
@@ -157,7 +191,7 @@ export default function Chart({
     return (
       <ResponsiveContainer width="100%" height={340}>
         <LineChart data={data} margin={MARGIN}>
-          <CartesianGrid stroke="#223047" strokeDasharray="3 3" />
+          <CartesianGrid stroke={GRID} strokeDasharray="3 3" />
           <XAxis dataKey="ts" tickFormatter={fmtX} tick={axisStyle} minTickGap={40} />
           <YAxis
             tickFormatter={fmtY}
@@ -170,14 +204,17 @@ export default function Chart({
             labelFormatter={(ts) => shortDate(ts as number, true)}
             formatter={(v, name) => [fmtVal(v as number), name as string]}
           />
-          <Line type="monotone" dataKey="retirement" stroke="#34d399" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="other" stroke="#60a5fa" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="debt" stroke="#f87171" strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="retirement" stroke={GREEN} strokeWidth={2} dot={false} isAnimationActive={false} />
+          <Line type="monotone" dataKey="other" stroke={ACCENT} strokeWidth={2} dot={false} isAnimationActive={false} />
+          <Line type="monotone" dataKey="debt" stroke={RED} strokeWidth={2} dot={false} isAnimationActive={false} />
         </LineChart>
       </ResponsiveContainer>
     );
   }
 
+  // (Animation is off on every mark above and below: rAF never fires on a
+  // throttled background tab — wall panels, screenshot captures — and an
+  // animated mark that never gets its first frame stays invisible.)
   // stacked: who moved the total — per-account balance changes per calendar
   // bucket, positives stacking up from the axis and negatives down
   // (stackOffset="sign"); the dotted trace is each bucket's net. Stacking
@@ -239,7 +276,7 @@ export default function Chart({
           );
         })}
         {net && (
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginTop: 4, color: "#8b9bb4" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginTop: 4, color: MUTED }}>
             <span>net</span>
             <span>{fmtDelta(Number(net.value))}</span>
           </div>
@@ -251,11 +288,11 @@ export default function Chart({
   return (
     <ResponsiveContainer width="100%" height={340}>
       <ComposedChart data={data} stackOffset="sign" margin={MARGIN}>
-        <CartesianGrid stroke="#223047" strokeDasharray="3 3" />
+        <CartesianGrid stroke={GRID} strokeDasharray="3 3" />
         <XAxis dataKey="ts" tickFormatter={(ts) => shortDate(ts as number)} tick={axisStyle} minTickGap={40} />
         <YAxis tickFormatter={fmtYDelta} tick={axisStyle} width={yAxisWidth(fmtYDelta, stackExtent)} />
-        <Tooltip content={<DeltaTip />} cursor={{ fill: "#223047", fillOpacity: 0.4 }} />
-        <ReferenceLine y={0} stroke="#8b9bb4" strokeOpacity={0.6} />
+        <Tooltip content={<DeltaTip />} cursor={{ fill: GRID, fillOpacity: 0.4 }} />
+        <ReferenceLine y={0} stroke={MUTED} strokeOpacity={0.6} />
         {/* Animation off: sign-stacked bar rects don't materialize until the
             grow animation's first frame, which never comes on throttled
             background tabs (wall panels). */}
@@ -272,11 +309,11 @@ export default function Chart({
         <Line
           type="monotone"
           dataKey="net"
-          stroke="#e6edf7"
+          stroke={TEXT}
           strokeWidth={1.5}
           strokeOpacity={0.65}
           strokeDasharray="4 3"
-          dot={{ r: 2, fill: "#e6edf7", strokeWidth: 0 }}
+          dot={{ r: 2, fill: TEXT, strokeWidth: 0 }}
           isAnimationActive={false}
         />
       </ComposedChart>
